@@ -68,6 +68,14 @@ const StudyScreen = () => {
     };
   }, [deckId]);
 
+  // Debug: Log study cards to verify count
+  useEffect(() => {
+    if (studyCards.length > 0) {
+      console.log(`📚 Study Session: ${studyCards.length} cards loaded`);
+      console.log('First card:', studyCards[0]?.front.substring(0, 30));
+    }
+  }, [studyCards]);
+
   // Exit confirmation removed - was blocking navigation
   // TODO: Re-implement with better UX later
 
