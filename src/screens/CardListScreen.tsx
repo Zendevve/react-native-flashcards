@@ -364,6 +364,7 @@ const styles = StyleSheet.create({
     ...GeistTypography.body,
     color: GeistColors.foreground,
     lineHeight: 20,
+    flexShrink: 1,
   },
   cardMeta: {
     flexDirection: 'row',
@@ -398,6 +399,10 @@ const styles = StyleSheet.create({
     borderColor: GeistColors.border,
     borderRadius: GeistBorderRadius.sm,
     backgroundColor: GeistColors.surface,
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   emptyState: {
     alignItems: 'center',
@@ -494,7 +499,8 @@ const styles = StyleSheet.create({
   },
   button: {
     ...GeistComponents.button.outline,
-    minHeight: 48,
+    minHeight: 52,
+    flex: 1,
   },
   cancelButton: {
     backgroundColor: GeistColors.surface,

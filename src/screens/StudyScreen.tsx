@@ -474,7 +474,7 @@ const styles = StyleSheet.create({
     gap: GeistSpacing.xs,
   },
   headerTitle: {
-    fontSize: GeistFontSizes.xxxl,
+    fontSize: GeistFontSizes.xl,
     fontWeight: GeistFontWeights.extrabold,
     color: GeistColors.foreground,
     backgroundColor: GeistColors.accentLight,
@@ -484,6 +484,8 @@ const styles = StyleSheet.create({
     borderColor: GeistColors.border,
     borderRadius: GeistBorderRadius.sm,
     textTransform: 'uppercase',
+    flexShrink: 1,
+    textAlign: 'center',
   },
   headerButton: {
     padding: GeistSpacing.xs,
@@ -631,11 +633,12 @@ const styles = StyleSheet.create({
     minHeight: 200,
   },
   cardText: {
-    fontSize: GeistFontSizes.xxxl,
+    fontSize: GeistFontSizes.xxl,
     color: GeistColors.foreground,
     textAlign: 'center',
-    lineHeight: 40,
+    lineHeight: 32,
     fontWeight: GeistFontWeights.bold,
+    flexShrink: 1,
   },
   tapHint: {
     position: 'absolute',
@@ -711,9 +714,12 @@ const styles = StyleSheet.create({
   ratingButton: {
     flex: 1,
     minWidth: 70,
+    minHeight: 56,
     paddingVertical: GeistSpacing.md,
+    paddingHorizontal: GeistSpacing.sm,
     borderRadius: GeistBorderRadius.md,
     alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: GeistBorders.thick,
     borderColor: GeistColors.border,
     backgroundColor: GeistColors.surface,

@@ -252,6 +252,8 @@ const styles = StyleSheet.create({
     borderWidth: GeistBorders.medium,
     borderColor: GeistColors.border,
     borderRadius: GeistBorderRadius.sm,
+    flexShrink: 1,
+    flexWrap: 'wrap',
   },
   deckDescription: {
     ...GeistTypography.body,
@@ -272,17 +274,18 @@ const styles = StyleSheet.create({
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
     gap: GeistSpacing.md,
   },
   statBox: {
-    width: '30%',
+    minWidth: 100,
+    flex: 1,
     alignItems: 'center',
     backgroundColor: GeistColors.surface,
     borderWidth: GeistBorders.medium,
     borderColor: GeistColors.border,
     borderRadius: GeistBorderRadius.sm,
     paddingVertical: GeistSpacing.md,
+    paddingHorizontal: GeistSpacing.sm,
     ...GeistShadows.sm,
   },
   statValue: {
@@ -303,6 +306,7 @@ const styles = StyleSheet.create({
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: GeistSpacing.sm,
     ...GeistComponents.button.outline,
     backgroundColor: GeistColors.surface,
@@ -330,17 +334,22 @@ const styles = StyleSheet.create({
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'flex-start',
     paddingVertical: GeistSpacing.md,
     borderBottomWidth: GeistBorders.medium,
     borderBottomColor: GeistColors.border,
+    gap: GeistSpacing.md,
   },
   infoLabel: {
     ...GeistTypography.body,
     color: GeistColors.gray700,
+    flex: 1,
   },
   infoValue: {
     ...GeistTypography.bodyStrong,
     color: GeistColors.foreground,
+    flex: 1,
+    textAlign: 'right',
   },
 });
 

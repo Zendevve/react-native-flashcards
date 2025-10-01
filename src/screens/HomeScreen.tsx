@@ -431,6 +431,8 @@ const styles = StyleSheet.create({
     borderWidth: GeistBorders.medium,
     borderColor: GeistColors.border,
     borderRadius: GeistBorderRadius.sm,
+    flexShrink: 1,
+    flexWrap: 'wrap',
   },
   deckDescription: {
     ...GeistTypography.body,
@@ -438,11 +440,15 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   deleteButton: {
-    padding: GeistSpacing.xs,
+    padding: GeistSpacing.sm,
     borderWidth: GeistBorders.medium,
     borderColor: GeistColors.border,
     borderRadius: GeistBorderRadius.sm,
     backgroundColor: GeistColors.surface,
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   deckStats: {
     flexDirection: 'row',
@@ -578,14 +584,16 @@ const styles = StyleSheet.create({
   },
   modalButtons: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'flex-end',
     marginTop: GeistSpacing.sm,
     gap: GeistSpacing.sm,
   },
   button: {
     ...GeistComponents.button.outline,
-    minHeight: 44,
+    minHeight: 52,
     justifyContent: 'center',
+    flex: 1,
   },
   cancelButton: {
     backgroundColor: GeistColors.surface,
