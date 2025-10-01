@@ -344,6 +344,10 @@ export const NeoBrutalistTypography: NeoTypographyTokens = {
     fontSize: NeoBrutalistFontSizes.base,
     fontWeight: NeoBrutalistFontWeights.bold as TextStyle['fontWeight'],
   },
+  bodyLarge: {
+    fontSize: NeoBrutalistFontSizes.lg,
+    fontWeight: NeoBrutalistFontWeights.semibold as TextStyle['fontWeight'],
+  },
   caption: {
     fontSize: NeoBrutalistFontSizes.sm,
     fontWeight: NeoBrutalistFontWeights.medium as TextStyle['fontWeight'],

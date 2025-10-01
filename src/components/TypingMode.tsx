@@ -1,7 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Keyboard } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { GeistColors, GeistSpacing, GeistFontSizes, GeistBorderRadius } from '../theme/geist';
+import {
+  GeistColors,
+  GeistSpacing,
+  GeistFontSizes,
+  GeistBorderRadius,
+  GeistBorders,
+  GeistShadows,
+  GeistFontWeights,
+  GeistComponents,
+  GeistTypography,
+} from '../theme/geist';
+import { useResponsive } from '../hooks/useResponsive';
 import { Card } from '../types';
 
 interface TypingModeProps {
@@ -13,6 +24,7 @@ const TypingMode: React.FC<TypingModeProps> = ({ currentCard, onAnswer }) => {
   const [userAnswer, setUserAnswer] = useState('');
   const [showResult, setShowResult] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
+  const { isPhone } = useResponsive();
 
   useEffect(() => {
     setUserAnswer('');
@@ -88,9 +100,9 @@ const TypingMode: React.FC<TypingModeProps> = ({ currentCard, onAnswer }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.questionContainer}>
-        <Text style={styles.questionLabel}>Question</Text>
+    <View style={[styles.container, isPhone && styles.containerMobile]}>
+      <View style={styles.questionCard}>
+        <Text style={styles.questionBadge}>Question</Text>
         <Text style={styles.questionText}>{currentCard.front}</Text>
       </View>
 
@@ -117,14 +129,14 @@ const TypingMode: React.FC<TypingModeProps> = ({ currentCard, onAnswer }) => {
               <Ionicons
                 name={isCorrect ? 'checkmark-circle' : 'close-circle'}
                 size={24}
-                color={GeistColors.background}
+                color={GeistColors.foreground}
               />
               <Text style={styles.resultText}>
-                {isCorrect ? 'Correct!' : 'Incorrect'}
+                {isCorrect ? '🎉 Correct!' : '❌ Incorrect'}
               </Text>
             </View>
             {!isCorrect && (
-              <View style={styles.correctAnswerContainer}>
+              <View style={styles.correctAnswerCard}>
                 <Text style={styles.correctAnswerLabel}>Correct answer:</Text>
                 <Text style={styles.correctAnswerText}>{currentCard.back}</Text>
               </View>
@@ -135,14 +147,17 @@ const TypingMode: React.FC<TypingModeProps> = ({ currentCard, onAnswer }) => {
 
       {!showResult && (
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
+          <TouchableOpacity style={styles.skipButton} onPress={handleSkip} activeOpacity={0.8}>
+            <Ionicons name="arrow-forward-outline" size={18} color={GeistColors.gray600} />
             <Text style={styles.skipButtonText}>Skip</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.submitButton, !userAnswer.trim() && styles.submitButtonDisabled]}
             onPress={checkAnswer}
             disabled={!userAnswer.trim()}
+            activeOpacity={0.8}
           >
+            <Ionicons name="checkmark-circle" size={18} color={GeistColors.foreground} />
             <Text style={styles.submitButtonText}>Submit</Text>
           </TouchableOpacity>
         </View>
@@ -155,137 +170,144 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: GeistSpacing.lg,
+    gap: GeistSpacing.lg,
   },
-  questionContainer: {
-    borderWidth: 1,
-    borderColor: GeistColors.border,
-    borderRadius: GeistBorderRadius.md,
-    padding: GeistSpacing.xl,
-    marginBottom: GeistSpacing.xl,
+  containerMobile: {
+    padding: GeistSpacing.md,
+    gap: GeistSpacing.md,
+  },
+  questionCard: {
+    ...GeistComponents.card.spacious,
+    backgroundColor: GeistColors.pastelAmber,
     minHeight: 150,
     justifyContent: 'center',
+    alignItems: 'center',
+    gap: GeistSpacing.md,
   },
-  questionLabel: {
-    position: 'absolute',
-    top: GeistSpacing.md,
-    left: GeistSpacing.md,
-    fontSize: GeistFontSizes.xs,
-    color: GeistColors.gray500,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    fontWeight: '500',
+  questionBadge: {
+    ...GeistTypography.badge,
+    backgroundColor: GeistColors.amberLight,
+    borderWidth: GeistBorders.medium,
+    borderColor: GeistColors.border,
+    borderRadius: GeistBorderRadius.full,
+    paddingHorizontal: GeistSpacing.md,
+    paddingVertical: GeistSpacing.xs,
+    color: GeistColors.foreground,
   },
   questionText: {
-    fontSize: GeistFontSizes.xxl,
-    color: GeistColors.foreground,
+    ...GeistTypography.title,
     textAlign: 'center',
-    lineHeight: 32,
+    color: GeistColors.foreground,
   },
   answerContainer: {
-    flex: 1,
+    gap: GeistSpacing.sm,
   },
   answerLabel: {
-    fontSize: GeistFontSizes.sm,
-    color: GeistColors.gray600,
-    marginBottom: GeistSpacing.sm,
+    ...GeistTypography.caption,
+    color: GeistColors.gray700,
   },
   input: {
-    borderWidth: 1,
+    borderWidth: GeistBorders.thick,
     borderColor: GeistColors.border,
-    borderRadius: GeistBorderRadius.sm,
+    borderRadius: GeistBorderRadius.md,
     padding: GeistSpacing.md,
     fontSize: GeistFontSizes.lg,
     color: GeistColors.foreground,
-    backgroundColor: GeistColors.background,
+    backgroundColor: GeistColors.surface,
+    minHeight: 56,
+    ...GeistShadows.sm,
   },
   inputCorrect: {
-    borderColor: GeistColors.foreground,
-    borderWidth: 2,
+    backgroundColor: GeistColors.tealLight,
+    borderColor: GeistColors.border,
   },
   inputWrong: {
-    borderColor: GeistColors.error,
-    borderWidth: 2,
+    backgroundColor: GeistColors.coralLight,
+    borderColor: GeistColors.border,
   },
   resultContainer: {
-    marginTop: GeistSpacing.lg,
+    marginTop: GeistSpacing.md,
+    gap: GeistSpacing.md,
   },
   resultBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: GeistSpacing.md,
-    borderRadius: GeistBorderRadius.sm,
+    borderRadius: GeistBorderRadius.md,
     gap: GeistSpacing.sm,
+    borderWidth: GeistBorders.thick,
+    borderColor: GeistColors.border,
+    ...GeistShadows.sm,
   },
   resultCorrect: {
-    backgroundColor: GeistColors.foreground,
+    backgroundColor: GeistColors.tealLight,
   },
   resultWrong: {
-    backgroundColor: GeistColors.error,
+    backgroundColor: GeistColors.coralLight,
   },
   resultText: {
-    fontSize: GeistFontSizes.base,
-    fontWeight: '500',
-    color: GeistColors.background,
+    ...GeistTypography.bodyStrong,
+    color: GeistColors.foreground,
   },
-  correctAnswerContainer: {
-    marginTop: GeistSpacing.md,
-    padding: GeistSpacing.md,
-    borderWidth: 1,
-    borderColor: GeistColors.border,
-    borderRadius: GeistBorderRadius.sm,
+  correctAnswerCard: {
+    ...GeistComponents.card,
+    backgroundColor: GeistColors.surface,
+    gap: GeistSpacing.xs,
   },
   correctAnswerLabel: {
-    fontSize: GeistFontSizes.xs,
-    color: GeistColors.gray500,
-    marginBottom: GeistSpacing.xs,
+    ...GeistTypography.caption,
+    color: GeistColors.gray600,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
   correctAnswerText: {
-    fontSize: GeistFontSizes.lg,
+    ...GeistTypography.bodyLarge,
     color: GeistColors.foreground,
-    fontWeight: '500',
+    fontWeight: GeistFontWeights.bold,
   },
   buttonContainer: {
     flexDirection: 'row',
     gap: GeistSpacing.sm,
-    marginTop: GeistSpacing.lg,
+    marginTop: GeistSpacing.md,
   },
   skipButton: {
     flex: 1,
+    flexDirection: 'row',
+    gap: GeistSpacing.xs,
     padding: GeistSpacing.md,
-    borderWidth: 1,
+    borderWidth: GeistBorders.thick,
     borderColor: GeistColors.border,
-    borderRadius: GeistBorderRadius.sm,
+    borderRadius: GeistBorderRadius.md,
     alignItems: 'center',
-    minHeight: 48,
     justifyContent: 'center',
+    minHeight: 52,
+    backgroundColor: GeistColors.surface,
+    ...GeistShadows.sm,
   },
   skipButtonText: {
-    fontSize: GeistFontSizes.sm,
-    color: GeistColors.gray600,
-    fontWeight: '500',
-    includeFontPadding: false,
-    textAlignVertical: 'center',
+    ...GeistTypography.bodyStrong,
+    color: GeistColors.gray700,
   },
   submitButton: {
     flex: 2,
+    flexDirection: 'row',
+    gap: GeistSpacing.xs,
     padding: GeistSpacing.md,
-    backgroundColor: GeistColors.foreground,
-    borderRadius: GeistBorderRadius.sm,
+    backgroundColor: GeistColors.amber,
+    borderWidth: GeistBorders.thick,
+    borderColor: GeistColors.border,
+    borderRadius: GeistBorderRadius.md,
     alignItems: 'center',
-    minHeight: 48,
     justifyContent: 'center',
+    minHeight: 52,
+    ...GeistShadows.md,
   },
   submitButtonDisabled: {
     opacity: 0.5,
   },
   submitButtonText: {
-    fontSize: GeistFontSizes.sm,
-    color: GeistColors.background,
-    fontWeight: '500',
-    includeFontPadding: false,
-    textAlignVertical: 'center',
+    ...GeistTypography.bodyStrong,
+    color: GeistColors.foreground,
+    fontWeight: GeistFontWeights.extrabold,
   },
 });
 
