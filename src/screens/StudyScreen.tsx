@@ -49,6 +49,8 @@ const StudyScreen = () => {
     updateCard,
     currentDeck,
     loadDeck,
+    deckStats,
+    loadDeckStats,
   } = useStore();
 
   const [isFlipped, setIsFlipped] = useState(false);
@@ -63,6 +65,7 @@ const StudyScreen = () => {
   useEffect(() => {
     startStudySession(deckId);
     loadDeck(deckId);
+    loadDeckStats(deckId);
     return () => {
       stopSpeaking();
     };
@@ -292,9 +295,11 @@ const StudyScreen = () => {
     );
   }
 
-  const totalCards = studyCards.length;
+  const stats = deckStats[deckId];
+  const totalCardsInDeck = stats?.totalCards || 0;
   const currentPosition = currentCardIndex + 1;
-  const progress = totalCards > 0 ? (currentPosition / totalCards) * 100 : 0;
+  const cardsInSession = studyCards.length;
+  const progress = cardsInSession > 0 ? (currentPosition / cardsInSession) * 100 : 0;
 
   return (
     <View style={styles.container}>
@@ -308,7 +313,7 @@ const StudyScreen = () => {
             <View style={[styles.progressFill, { width: `${progress}%` }]} />
           </View>
           <Text style={styles.progressText}>
-            Card {currentPosition} of {totalCards}
+            {currentPosition} / {cardsInSession} • Total: {totalCardsInDeck}
             {timeLeft !== null && timeLeft >= 0 && ` • ${timeLeft}s`}
           </Text>
         </View>
