@@ -14,7 +14,17 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
 import { useStore } from '../store/useStore';
-import { GeistColors, GeistSpacing, GeistFontSizes, GeistBorderRadius } from '../theme/geist';
+import {
+  GeistColors,
+  GeistSpacing,
+  GeistFontSizes,
+  GeistBorderRadius,
+  GeistBorders,
+  GeistComponents,
+  GeistTypography,
+  GeistShadows,
+} from '../theme/geist';
+import { useResponsive } from '../hooks/useResponsive';
 import { DeckSettings, INTERVAL_PRESETS } from '../types';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'DeckSettings'>;
@@ -26,6 +36,8 @@ const DeckSettingsScreen = () => {
   const { deckId } = route.params;
 
   const { currentDeck, loadDeck, updateDeck } = useStore();
+  const { isPhone } = useResponsive();
+  const isMobile = isPhone;
   const [settings, setSettings] = useState<DeckSettings | null>(null);
 
   useEffect(() => {
@@ -68,21 +80,17 @@ const DeckSettingsScreen = () => {
     }
   };
 
-  const updateSetting = <K extends keyof DeckSettings>(
-    key: K,
-    value: DeckSettings[K]
-  ) => {
+  const updateSetting = <K extends keyof DeckSettings>(key: K, value: DeckSettings[K]) => {
     setSettings({ ...settings, [key]: value });
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Interval Scheme Section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Spaced Repetition</Text>
-        
         <Text style={styles.label}>Interval Scheme</Text>
-        <View style={styles.presetButtons}>
+        <View style={[styles.presetButtons, isMobile && styles.presetButtonsMobile]}>
           {Object.keys(INTERVAL_PRESETS).map((preset) => (
             <TouchableOpacity
               key={preset}
@@ -126,7 +134,7 @@ const DeckSettingsScreen = () => {
           </View>
         )}
 
-        <View style={styles.settingRow}>
+        <View style={[styles.settingRow, isMobile && styles.settingRowMobile]}>
           <View style={styles.settingLeft}>
             <Text style={styles.settingLabel}>New Cards Per Day</Text>
             <Text style={styles.settingHelper}>Maximum new cards to introduce daily</Text>
@@ -140,7 +148,7 @@ const DeckSettingsScreen = () => {
           />
         </View>
 
-        <View style={styles.settingRow}>
+        <View style={[styles.settingRow, isMobile && styles.settingRowMobile]}>
           <View style={styles.settingLeft}>
             <Text style={styles.settingLabel}>Review Cards Per Day</Text>
             <Text style={styles.settingHelper}>Maximum reviews per day</Text>
@@ -159,7 +167,7 @@ const DeckSettingsScreen = () => {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Languages</Text>
 
-        <View style={styles.settingRow}>
+        <View style={[styles.settingRow, isMobile && styles.settingRowMobile]}>
           <Text style={styles.settingLabel}>Question Language</Text>
           <TextInput
             style={styles.languageInput}
@@ -170,7 +178,7 @@ const DeckSettingsScreen = () => {
           />
         </View>
 
-        <View style={styles.settingRow}>
+        <View style={[styles.settingRow, isMobile && styles.settingRowMobile]}>
           <Text style={styles.settingLabel}>Answer Language</Text>
           <TextInput
             style={styles.languageInput}
@@ -186,7 +194,7 @@ const DeckSettingsScreen = () => {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Text-to-Speech</Text>
 
-        <View style={styles.settingRow}>
+        <View style={[styles.settingRow, isMobile && styles.settingRowMobile]}>
           <View style={styles.settingLeft}>
             <Text style={styles.settingLabel}>Auto-speak Question</Text>
             <Text style={styles.settingHelper}>Automatically read question aloud</Text>
@@ -199,7 +207,7 @@ const DeckSettingsScreen = () => {
           />
         </View>
 
-        <View style={styles.settingRow}>
+        <View style={[styles.settingRow, isMobile && styles.settingRowMobile]}>
           <View style={styles.settingLeft}>
             <Text style={styles.settingLabel}>Auto-speak Answer</Text>
             <Text style={styles.settingHelper}>Automatically read answer aloud</Text>
@@ -217,7 +225,7 @@ const DeckSettingsScreen = () => {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Card Display</Text>
 
-        <View style={styles.settingRow}>
+        <View style={[styles.settingRow, isMobile && styles.settingRowMobile]}>
           <View style={styles.settingLeft}>
             <Text style={styles.settingLabel}>Shuffle Cards</Text>
             <Text style={styles.settingHelper}>Randomize card order during study</Text>
@@ -230,7 +238,7 @@ const DeckSettingsScreen = () => {
           />
         </View>
 
-        <View style={styles.settingRow}>
+        <View style={[styles.settingRow, isMobile && styles.settingRowMobile]}>
           <View style={styles.settingLeft}>
             <Text style={styles.settingLabel}>Invert Cards</Text>
             <Text style={styles.settingHelper}>Swap question and answer sides</Text>
@@ -243,7 +251,7 @@ const DeckSettingsScreen = () => {
           />
         </View>
 
-        <View style={styles.settingRow}>
+        <View style={[styles.settingRow, isMobile && styles.settingRowMobile]}>
           <View style={styles.settingLeft}>
             <Text style={styles.settingLabel}>Enable Hints</Text>
             <Text style={styles.settingHelper}>Show partial answer as hint</Text>
@@ -257,7 +265,7 @@ const DeckSettingsScreen = () => {
         </View>
 
         {settings.enableHints && (
-          <View style={styles.settingRow}>
+          <View style={[styles.settingRow, isMobile && styles.settingRowMobile]}>
             <View style={styles.settingLeft}>
               <Text style={styles.settingLabel}>Hint Masking Level</Text>
               <Text style={styles.settingHelper}>Percentage of answer to hide</Text>
@@ -318,7 +326,7 @@ const DeckSettingsScreen = () => {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Timer</Text>
 
-        <View style={styles.settingRow}>
+        <View style={[styles.settingRow, isMobile && styles.settingRowMobile]}>
           <View style={styles.settingLeft}>
             <Text style={styles.settingLabel}>Enable Timer</Text>
             <Text style={styles.settingHelper}>Show countdown timer during study</Text>
@@ -332,7 +340,7 @@ const DeckSettingsScreen = () => {
         </View>
 
         {settings.enableTimer && (
-          <View style={styles.settingRow}>
+          <View style={[styles.settingRow, isMobile && styles.settingRowMobile]}>
             <View style={styles.settingLeft}>
               <Text style={styles.settingLabel}>Timer Duration (seconds)</Text>
               <Text style={styles.settingHelper}>Time limit per card</Text>
@@ -351,6 +359,7 @@ const DeckSettingsScreen = () => {
       {/* Save Button */}
       <View style={styles.footer}>
         <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+          <Ionicons name="save" size={20} color={GeistColors.foreground} />
           <Text style={styles.saveButtonText}>Save Settings</Text>
         </TouchableOpacity>
       </View>
@@ -361,153 +370,138 @@ const DeckSettingsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: GeistColors.background,
+    backgroundColor: GeistColors.canvas,
+  },
+  content: {
+    paddingHorizontal: GeistSpacing.lg,
+    paddingBottom: GeistSpacing.xxxl,
+    gap: GeistSpacing.lg,
   },
   section: {
-    borderBottomWidth: 1,
-    borderBottomColor: GeistColors.border,
-    paddingHorizontal: GeistSpacing.md,
-    paddingVertical: GeistSpacing.lg,
+    ...GeistComponents.card.spacious,
+    backgroundColor: GeistColors.surface,
+    gap: GeistSpacing.md,
   },
   sectionTitle: {
-    fontSize: GeistFontSizes.xs,
-    fontWeight: '500',
-    color: GeistColors.gray600,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: GeistSpacing.md,
+    ...GeistTypography.caption,
+    color: GeistColors.gray700,
   },
   label: {
-    fontSize: GeistFontSizes.sm,
-    fontWeight: '500',
+    ...GeistTypography.bodyStrong,
     color: GeistColors.foreground,
-    marginBottom: GeistSpacing.xs,
   },
   helperText: {
-    fontSize: GeistFontSizes.xs,
-    color: GeistColors.gray500,
-    marginBottom: GeistSpacing.sm,
+    ...GeistTypography.caption,
+    color: GeistColors.gray600,
   },
   presetButtons: {
     flexDirection: 'row',
     gap: GeistSpacing.sm,
     marginBottom: GeistSpacing.md,
   },
+  presetButtonsMobile: {
+    flexWrap: 'wrap',
+  },
   presetButton: {
     flex: 1,
-    paddingVertical: GeistSpacing.sm,
-    borderRadius: GeistBorderRadius.sm,
-    borderWidth: 1,
-    borderColor: GeistColors.border,
-    alignItems: 'center',
+    minWidth: 120,
+    ...GeistComponents.button.outline,
+    backgroundColor: GeistColors.surface,
   },
   presetButtonActive: {
-    backgroundColor: GeistColors.foreground,
-    borderColor: GeistColors.foreground,
+    backgroundColor: GeistColors.violet,
+    borderColor: GeistColors.border,
   },
   presetButtonText: {
-    fontSize: GeistFontSizes.sm,
+    ...GeistTypography.button,
     color: GeistColors.foreground,
-    fontWeight: '500',
   },
   presetButtonTextActive: {
-    color: GeistColors.background,
+    color: GeistColors.foreground,
   },
   customIntervals: {
     marginBottom: GeistSpacing.md,
+    gap: GeistSpacing.xs,
   },
   input: {
-    borderWidth: 1,
-    borderColor: GeistColors.border,
-    borderRadius: GeistBorderRadius.sm,
-    padding: GeistSpacing.sm,
-    fontSize: GeistFontSizes.sm,
+    ...GeistComponents.input,
     color: GeistColors.foreground,
-    backgroundColor: GeistColors.background,
   },
   settingRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: GeistSpacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: GeistColors.border,
+    borderTopWidth: GeistBorders.medium,
+    borderTopColor: GeistColors.border,
+  },
+  settingRowMobile: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    gap: GeistSpacing.sm,
   },
   settingLeft: {
     flex: 1,
     marginRight: GeistSpacing.md,
+    gap: GeistSpacing.xs,
   },
   settingLabel: {
-    fontSize: GeistFontSizes.sm,
+    ...GeistTypography.bodyStrong,
     color: GeistColors.foreground,
-    fontWeight: '500',
-    marginBottom: 2,
   },
   settingHelper: {
-    fontSize: GeistFontSizes.xs,
-    color: GeistColors.gray500,
+    ...GeistTypography.caption,
+    color: GeistColors.gray600,
   },
   numberInput: {
-    borderWidth: 1,
-    borderColor: GeistColors.border,
-    borderRadius: GeistBorderRadius.sm,
-    padding: GeistSpacing.sm,
-    fontSize: GeistFontSizes.sm,
-    color: GeistColors.foreground,
-    width: 80,
+    ...GeistComponents.input,
+    width: 100,
     textAlign: 'center',
   },
   languageInput: {
-    borderWidth: 1,
-    borderColor: GeistColors.border,
-    borderRadius: GeistBorderRadius.sm,
-    padding: GeistSpacing.sm,
-    fontSize: GeistFontSizes.sm,
-    color: GeistColors.foreground,
-    width: 100,
+    ...GeistComponents.input,
+    width: 140,
     textAlign: 'center',
   },
   segmentedControl: {
     flexDirection: 'row',
-    borderWidth: 1,
+    borderWidth: GeistBorders.medium,
     borderColor: GeistColors.border,
     borderRadius: GeistBorderRadius.sm,
     overflow: 'hidden',
+    backgroundColor: GeistColors.surface,
   },
   segment: {
-    paddingVertical: GeistSpacing.xs,
-    paddingHorizontal: GeistSpacing.sm,
-    borderRightWidth: 1,
+    paddingVertical: GeistSpacing.sm,
+    paddingHorizontal: GeistSpacing.md,
+    borderRightWidth: GeistBorders.medium,
     borderRightColor: GeistColors.border,
   },
   segmentActive: {
-    backgroundColor: GeistColors.foreground,
+    backgroundColor: GeistColors.violet,
   },
   segmentText: {
-    fontSize: GeistFontSizes.sm,
+    ...GeistTypography.button,
     color: GeistColors.foreground,
-    fontWeight: '500',
   },
   segmentTextActive: {
-    color: GeistColors.background,
+    color: GeistColors.foreground,
   },
   footer: {
     padding: GeistSpacing.lg,
+    alignItems: 'center',
   },
   saveButton: {
-    backgroundColor: GeistColors.foreground,
-    borderRadius: GeistBorderRadius.sm,
-    paddingVertical: GeistSpacing.md,
+    ...GeistComponents.button.primary,
+    flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 48,
     justifyContent: 'center',
+    gap: GeistSpacing.sm,
+    width: '100%',
   },
   saveButtonText: {
-    color: GeistColors.background,
-    fontSize: GeistFontSizes.sm,
-    fontWeight: '500',
-    includeFontPadding: false,
-    textAlignVertical: 'center',
+    ...GeistTypography.button,
+    color: GeistColors.foreground,
   },
   modeButtons: {
     flexDirection: 'row',
@@ -515,23 +509,19 @@ const styles = StyleSheet.create({
   },
   modeButton: {
     flex: 1,
-    paddingVertical: GeistSpacing.sm,
-    borderRadius: GeistBorderRadius.sm,
-    borderWidth: 1,
-    borderColor: GeistColors.border,
-    alignItems: 'center',
+    ...GeistComponents.button.outline,
+    backgroundColor: GeistColors.surface,
   },
   modeButtonActive: {
-    backgroundColor: GeistColors.foreground,
-    borderColor: GeistColors.foreground,
+    backgroundColor: GeistColors.violet,
+    borderColor: GeistColors.border,
   },
   modeButtonText: {
-    fontSize: GeistFontSizes.sm,
+    ...GeistTypography.button,
     color: GeistColors.foreground,
-    fontWeight: '500',
   },
   modeButtonTextActive: {
-    color: GeistColors.background,
+    color: GeistColors.foreground,
   },
 });
 

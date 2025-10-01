@@ -15,7 +15,16 @@ import { RootStackParamList } from '../types/navigation';
 import { useStore } from '../store/useStore';
 import { Rating } from '../types';
 import { calculateNextReview } from '../utils/spacedRepetition';
-import { GeistColors, GeistSpacing, GeistFontSizes, GeistBorderRadius, GeistShadows } from '../theme/geist';
+import {
+  GeistColors,
+  GeistSpacing,
+  GeistFontSizes,
+  GeistBorderRadius,
+  GeistShadows,
+  GeistFontWeights,
+  GeistBorders,
+  GeistComponents,
+} from '../theme/geist';
 import { speak, stopSpeaking } from '../utils/textToSpeech';
 import { useResponsive, useContentWidth } from '../hooks/useResponsive';
 
@@ -336,9 +345,8 @@ const StudyScreen = () => {
             >
               <Text style={styles.cardText}>{cardContent.front}</Text>
             </ScrollView>
-            
             <View style={styles.tapHint}>
-              <Ionicons name="hand-left-outline" size={16} color={GeistColors.gray400} />
+              <Ionicons name="hand-left-outline" size={16} color={GeistColors.foreground} />
               <Text style={styles.tapHintText}>Tap to reveal answer</Text>
             </View>
           </Animated.View>
@@ -393,14 +401,14 @@ const StudyScreen = () => {
           <Text style={styles.ratingTitle}>How well did you know this?</Text>
           <View style={styles.ratingButtons}>
             <TouchableOpacity
-              style={styles.ratingButton}
+              style={[styles.ratingButton, styles.ratingButtonAgain]}
               onPress={() => handleRating('again')}
             >
               <Text style={styles.ratingButtonText}>Again</Text>
               <Text style={styles.ratingSubtext}>{'<1d'}</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.ratingButton}
+              style={[styles.ratingButton, styles.ratingButtonHard]}
               onPress={() => handleRating('hard')}
             >
               <Text style={styles.ratingButtonText}>Hard</Text>
@@ -409,7 +417,7 @@ const StudyScreen = () => {
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.ratingButton}
+              style={[styles.ratingButton, styles.ratingButtonGood]}
               onPress={() => handleRating('good')}
             >
               <Text style={styles.ratingButtonText}>Good</Text>
@@ -422,7 +430,7 @@ const StudyScreen = () => {
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.ratingButton}
+              style={[styles.ratingButton, styles.ratingButtonEasy]}
               onPress={() => handleRating('easy')}
             >
               <Text style={styles.ratingButtonText}>Easy</Text>
@@ -444,44 +452,73 @@ const StudyScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: GeistColors.background,
+    backgroundColor: GeistColors.canvas,
+    paddingBottom: GeistSpacing.xxl,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: GeistSpacing.md,
-    paddingTop: GeistSpacing.md,
-    paddingBottom: GeistSpacing.sm,
-    borderBottomWidth: 1,
+    paddingHorizontal: GeistSpacing.lg,
+    paddingTop: GeistSpacing.lg,
+    paddingBottom: GeistSpacing.md,
+    backgroundColor: GeistColors.surface,
+    borderBottomWidth: GeistBorders.thick,
     borderBottomColor: GeistColors.border,
+    gap: GeistSpacing.sm,
+    ...GeistShadows.sm,
   },
   headerCenter: {
     flex: 1,
     alignItems: 'center',
+    gap: GeistSpacing.xs,
   },
   headerTitle: {
-    fontSize: GeistFontSizes.base,
-    fontWeight: '500',
+    fontSize: GeistFontSizes.xxxl,
+    fontWeight: GeistFontWeights.extrabold,
     color: GeistColors.foreground,
+    backgroundColor: GeistColors.accentLight,
+    paddingHorizontal: GeistSpacing.sm,
+    paddingVertical: 4,
+    borderWidth: GeistBorders.thick,
+    borderColor: GeistColors.border,
+    borderRadius: GeistBorderRadius.sm,
+    textTransform: 'uppercase',
   },
   headerButton: {
     padding: GeistSpacing.xs,
+    borderWidth: GeistBorders.medium,
+    borderColor: GeistColors.border,
+    borderRadius: GeistBorderRadius.sm,
+    backgroundColor: GeistColors.surface,
   },
   timerText: {
     fontSize: GeistFontSizes.sm,
-    color: GeistColors.gray600,
-    marginTop: 2,
+    color: GeistColors.foreground,
+    backgroundColor: GeistColors.violetLight,
+    paddingHorizontal: GeistSpacing.sm,
+    paddingVertical: 2,
+    borderWidth: GeistBorders.medium,
+    borderColor: GeistColors.border,
+    borderRadius: GeistBorderRadius.full,
   },
   timerWarning: {
-    color: GeistColors.error,
-    fontWeight: '600',
+    backgroundColor: GeistColors.coralLight,
+    color: GeistColors.foreground,
   },
   lastCardBadge: {
     fontSize: GeistFontSizes.xs,
-    color: GeistColors.accent,
-    fontWeight: '600',
+    color: GeistColors.foreground,
+    fontWeight: GeistFontWeights.bold,
     marginTop: 2,
+    backgroundColor: GeistColors.limeLight,
+    paddingHorizontal: GeistSpacing.sm,
+    paddingVertical: 2,
+    borderWidth: GeistBorders.medium,
+    borderColor: GeistColors.border,
+    borderRadius: GeistBorderRadius.full,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
   },
   previousButton: {
     flexDirection: 'row',
@@ -491,6 +528,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: GeistSpacing.md,
     alignSelf: 'flex-start',
     marginBottom: GeistSpacing.sm,
+    borderWidth: GeistBorders.medium,
+    borderColor: GeistColors.border,
+    borderRadius: GeistBorderRadius.sm,
+    backgroundColor: GeistColors.surface,
+    ...GeistShadows.sm,
   },
   previousButtonText: {
     fontSize: GeistFontSizes.sm,
@@ -511,55 +553,68 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   progressBar: {
-    height: 2,
+    height: GeistBorders.medium,
     backgroundColor: GeistColors.gray200,
-    borderRadius: 1,
+    borderRadius: GeistBorderRadius.sm,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: GeistColors.foreground,
+    backgroundColor: GeistColors.accent,
   },
   cardContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: GeistSpacing.xl,
+    padding: GeistSpacing.xxl,
   },
   card: {
     width: '100%',
     height: '70%',
     maxHeight: 500,
+    ...GeistShadows.lg,
   },
   cardFace: {
+    ...GeistComponents.card,
     position: 'absolute',
     width: '100%',
     height: '100%',
-    backgroundColor: GeistColors.background,
-    borderWidth: 1,
-    borderColor: GeistColors.border,
-    borderRadius: GeistBorderRadius.md,
-    padding: GeistSpacing.xxxl,
+    padding: GeistSpacing.xxl,
     justifyContent: 'center',
     alignItems: 'center',
     backfaceVisibility: 'hidden',
   },
-  cardFront: {},
-  cardBack: {},
+  cardFront: {
+    backgroundColor: GeistColors.pastelViolet,
+  },
+  cardBack: {
+    backgroundColor: GeistColors.pastelTeal,
+  },
   cardLabel: {
     position: 'absolute',
     top: GeistSpacing.lg,
     fontSize: GeistFontSizes.xs,
-    color: GeistColors.gray500,
+    color: GeistColors.foreground,
     textTransform: 'uppercase',
     letterSpacing: 1,
-    fontWeight: '500',
+    fontWeight: GeistFontWeights.bold,
+    backgroundColor: GeistColors.surface,
+    paddingHorizontal: GeistSpacing.sm,
+    paddingVertical: 2,
+    borderWidth: GeistBorders.medium,
+    borderColor: GeistColors.border,
+    borderRadius: GeistBorderRadius.full,
   },
   speakerButton: {
     position: 'absolute',
     top: GeistSpacing.lg,
     right: GeistSpacing.lg,
-    padding: GeistSpacing.xs,
+    padding: GeistSpacing.sm,
+    backgroundColor: GeistColors.surface,
+    borderWidth: GeistBorders.medium,
+    borderColor: GeistColors.border,
+    borderRadius: GeistBorderRadius.sm,
+    ...GeistShadows.sm,
   },
   cardTextContainer: {
     flex: 1,
@@ -576,22 +631,30 @@ const styles = StyleSheet.create({
     minHeight: 200,
   },
   cardText: {
-    fontSize: GeistFontSizes.xxl,
+    fontSize: GeistFontSizes.xxxl,
     color: GeistColors.foreground,
     textAlign: 'center',
-    lineHeight: 36,
-    fontWeight: '400',
+    lineHeight: 40,
+    fontWeight: GeistFontWeights.bold,
   },
   tapHint: {
     position: 'absolute',
     bottom: GeistSpacing.lg,
     flexDirection: 'row',
     alignItems: 'center',
+    gap: GeistSpacing.xs,
+    backgroundColor: GeistColors.surface,
+    borderWidth: GeistBorders.medium,
+    borderColor: GeistColors.border,
+    borderRadius: GeistBorderRadius.full,
+    paddingHorizontal: GeistSpacing.md,
+    paddingVertical: 6,
+    ...GeistShadows.sm,
   },
   tapHintText: {
     fontSize: GeistFontSizes.sm,
-    color: GeistColors.gray400,
-    marginLeft: GeistSpacing.xs,
+    color: GeistColors.foreground,
+    fontWeight: GeistFontWeights.medium,
   },
   hintContainer: {
     position: 'absolute',
@@ -605,36 +668,40 @@ const styles = StyleSheet.create({
     gap: GeistSpacing.xs,
     paddingHorizontal: GeistSpacing.md,
     paddingVertical: GeistSpacing.sm,
-    borderWidth: 1,
+    borderWidth: GeistBorders.medium,
     borderColor: GeistColors.border,
     borderRadius: GeistBorderRadius.sm,
-    backgroundColor: GeistColors.gray50,
+    backgroundColor: GeistColors.pastelAmber,
+    ...GeistShadows.sm,
   },
   hintButtonText: {
     fontSize: GeistFontSizes.sm,
-    color: GeistColors.gray600,
-    fontWeight: '500',
+    color: GeistColors.foreground,
+    fontWeight: GeistFontWeights.medium,
   },
   hintText: {
     fontSize: GeistFontSizes.xl,
-    color: GeistColors.gray600,
-    fontWeight: '500',
+    color: GeistColors.foreground,
+    fontWeight: GeistFontWeights.black,
     letterSpacing: 2,
     fontFamily: 'monospace',
   },
   ratingContainer: {
-    backgroundColor: GeistColors.background,
-    borderTopWidth: 1,
+    backgroundColor: GeistColors.surface,
+    borderTopWidth: GeistBorders.thick,
     borderTopColor: GeistColors.border,
-    padding: GeistSpacing.lg,
-    paddingBottom: GeistSpacing.xl,
+    padding: GeistSpacing.xl,
+    paddingBottom: GeistSpacing.xxl,
+    ...GeistShadows.md,
   },
   ratingTitle: {
     fontSize: GeistFontSizes.sm,
     fontWeight: '500',
-    color: GeistColors.gray600,
+    color: GeistColors.foreground,
     textAlign: 'center',
     marginBottom: GeistSpacing.md,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   ratingButtons: {
     flexDirection: 'row',
@@ -645,48 +712,69 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 70,
     paddingVertical: GeistSpacing.md,
-    borderRadius: GeistBorderRadius.sm,
+    borderRadius: GeistBorderRadius.md,
     alignItems: 'center',
-    borderWidth: 1,
+    borderWidth: GeistBorders.thick,
     borderColor: GeistColors.border,
-    backgroundColor: GeistColors.background,
+    backgroundColor: GeistColors.surface,
+    ...GeistShadows.sm,
+  },
+  ratingButtonAgain: {
+    backgroundColor: GeistColors.coralLight,
+  },
+  ratingButtonHard: {
+    backgroundColor: GeistColors.amberLight,
+  },
+  ratingButtonGood: {
+    backgroundColor: GeistColors.tealLight,
+  },
+  ratingButtonEasy: {
+    backgroundColor: GeistColors.limeLight,
   },
   ratingButtonText: {
     color: GeistColors.foreground,
-    fontSize: GeistFontSizes.sm,
-    fontWeight: '500',
+    fontSize: GeistFontSizes.base,
+    fontWeight: GeistFontWeights.extrabold,
     includeFontPadding: false,
     textAlignVertical: 'center',
+    textTransform: 'uppercase',
   },
   ratingSubtext: {
     fontSize: GeistFontSizes.xs,
-    color: GeistColors.gray500,
-    marginTop: 2,
+    color: GeistColors.gray700,
+    marginTop: 4,
+    fontWeight: GeistFontWeights.medium,
   },
   completionContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: GeistSpacing.xl,
+    padding: GeistSpacing.xxl,
+    backgroundColor: GeistColors.pastelViolet,
+    borderWidth: GeistBorders.thick,
+    borderColor: GeistColors.border,
+    borderRadius: GeistBorderRadius.lg,
+    gap: GeistSpacing.lg,
+    ...GeistShadows.lg,
   },
   completionTitle: {
-    fontSize: GeistFontSizes.xxxl,
-    fontWeight: '600',
+    fontSize: GeistFontSizes.display,
+    fontWeight: GeistFontWeights.black,
     color: GeistColors.foreground,
-    marginTop: GeistSpacing.lg,
-    marginBottom: GeistSpacing.sm,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   completionText: {
-    fontSize: GeistFontSizes.base,
-    color: GeistColors.gray600,
-    marginBottom: GeistSpacing.xl,
+    fontSize: GeistFontSizes.lg,
+    color: GeistColors.gray700,
+    textAlign: 'center',
   },
   statsContainer: {
     flexDirection: 'row',
-    backgroundColor: GeistColors.gray50,
-    borderWidth: 1,
+    backgroundColor: GeistColors.surface,
+    borderWidth: GeistBorders.thick,
     borderColor: GeistColors.border,
-    borderRadius: GeistBorderRadius.md,
+    borderRadius: GeistBorderRadius.lg,
     padding: GeistSpacing.lg,
     marginBottom: GeistSpacing.xl,
     gap: GeistSpacing.md,
@@ -696,16 +784,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statValue: {
-    fontSize: GeistFontSizes.xxl,
-    fontWeight: '600',
+    fontSize: GeistFontSizes.xxxl,
+    fontWeight: GeistFontWeights.black,
     color: GeistColors.foreground,
   },
   statLabel: {
     fontSize: GeistFontSizes.xs,
-    color: GeistColors.gray500,
+    color: GeistColors.gray600,
     marginTop: GeistSpacing.xs,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 1,
   },
   completionButtons: {
     flexDirection: 'row',
@@ -719,46 +807,56 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: GeistColors.foreground,
+    backgroundColor: GeistColors.violet,
     paddingVertical: GeistSpacing.md,
-    borderRadius: GeistBorderRadius.sm,
+    borderRadius: GeistBorderRadius.md,
     gap: GeistSpacing.xs,
+    borderWidth: GeistBorders.thick,
+    borderColor: GeistColors.border,
+    ...GeistShadows.sm,
   },
   primaryCompletionButtonText: {
-    color: GeistColors.background,
+    color: GeistColors.foreground,
     fontSize: GeistFontSizes.base,
-    fontWeight: '500',
+    fontWeight: GeistFontWeights.extrabold,
+    textTransform: 'uppercase',
   },
   secondaryCompletionButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: GeistColors.background,
-    borderWidth: 1,
+    backgroundColor: GeistColors.surface,
+    borderWidth: GeistBorders.thick,
     borderColor: GeistColors.border,
     paddingVertical: GeistSpacing.md,
-    borderRadius: GeistBorderRadius.sm,
+    borderRadius: GeistBorderRadius.md,
     gap: GeistSpacing.xs,
+    ...GeistShadows.sm,
   },
   secondaryCompletionButtonText: {
     color: GeistColors.foreground,
     fontSize: GeistFontSizes.base,
-    fontWeight: '500',
+    fontWeight: GeistFontWeights.extrabold,
+    textTransform: 'uppercase',
   },
   doneButton: {
-    backgroundColor: GeistColors.foreground,
+    backgroundColor: GeistColors.coral,
     paddingVertical: GeistSpacing.md,
     paddingHorizontal: GeistSpacing.xxl,
-    borderRadius: GeistBorderRadius.sm,
+    borderRadius: GeistBorderRadius.md,
+    borderWidth: GeistBorders.thick,
+    borderColor: GeistColors.border,
+    ...GeistShadows.sm,
     marginTop: GeistSpacing.xl,
   },
   doneButtonText: {
-    color: GeistColors.background,
+    color: GeistColors.foreground,
     fontSize: GeistFontSizes.base,
-    fontWeight: '500',
+    fontWeight: GeistFontWeights.extrabold,
     includeFontPadding: false,
     textAlignVertical: 'center',
+    textTransform: 'uppercase',
   },
 });
 

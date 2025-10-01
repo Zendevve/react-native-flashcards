@@ -1,68 +1,94 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { GeistColors, GeistSpacing, GeistFontSizes, GeistBorderRadius } from '../theme/geist';
+import {
+  GeistColors,
+  GeistSpacing,
+  GeistFontSizes,
+  GeistBorderRadius,
+  GeistBorders,
+  GeistComponents,
+  GeistTypography,
+  GeistShadows,
+} from '../theme/geist';
+import { useResponsive } from '../hooks/useResponsive';
 
 const SettingsScreen = () => {
+  const { isPhone } = useResponsive();
+  const isMobile = isPhone;
+
+  type SettingItem = {
+    icon?: keyof typeof Ionicons.glyphMap | null;
+    label: string;
+    value?: string;
+  };
+
+  type SettingsSection = {
+    title: string;
+    items: SettingItem[];
+  };
+
+  const sections: SettingsSection[] = [
+    {
+      title: 'General',
+      items: [
+        { icon: 'moon-outline' as const, label: 'Dark Theme' },
+        { icon: 'notifications-outline' as const, label: 'Notifications' },
+      ],
+    },
+    {
+      title: 'Data',
+      items: [
+        { icon: 'cloud-upload-outline' as const, label: 'Backup' },
+        { icon: 'cloud-download-outline' as const, label: 'Restore' },
+        { icon: 'download-outline' as const, label: 'Import CSV' },
+      ],
+    },
+    {
+      title: 'About',
+      items: [
+        { icon: null, label: 'Version', value: '1.0.0' },
+        { icon: 'information-circle-outline' as const, label: 'Help & Support' },
+      ],
+    },
+  ];
+
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>General</Text>
-        <TouchableOpacity style={styles.settingItem}>
-          <View style={styles.settingLeft}>
-            <Ionicons name="moon-outline" size={20} color={GeistColors.foreground} />
-            <Text style={styles.settingText}>Dark Theme</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={16} color={GeistColors.gray400} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.settingItem}>
-          <View style={styles.settingLeft}>
-            <Ionicons name="notifications-outline" size={20} color={GeistColors.foreground} />
-            <Text style={styles.settingText}>Notifications</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={16} color={GeistColors.gray400} />
-        </TouchableOpacity>
-      </View>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}> 
+      {sections.map((section) => (
+        <View key={section.title} style={styles.section}>
+          <Text style={styles.sectionTitle}>{section.title}</Text>
+          {section.items.map((item, index) => {
+            const isLast = index === section.items.length - 1;
+            if (item.value) {
+              return (
+                <View key={item.label} style={[styles.settingItem, isLast && styles.settingItemLast]}>
+                  <Text style={styles.settingText}>{item.label}</Text>
+                  <Text style={styles.settingValue}>{item.value}</Text>
+                </View>
+              );
+            }
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Data</Text>
-        <TouchableOpacity style={styles.settingItem}>
-          <View style={styles.settingLeft}>
-            <Ionicons name="cloud-upload-outline" size={20} color={GeistColors.foreground} />
-            <Text style={styles.settingText}>Backup</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={16} color={GeistColors.gray400} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.settingItem}>
-          <View style={styles.settingLeft}>
-            <Ionicons name="cloud-download-outline" size={20} color={GeistColors.foreground} />
-            <Text style={styles.settingText}>Restore</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={16} color={GeistColors.gray400} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.settingItem}>
-          <View style={styles.settingLeft}>
-            <Ionicons name="download-outline" size={20} color={GeistColors.foreground} />
-            <Text style={styles.settingText}>Import CSV</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={16} color={GeistColors.gray400} />
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>About</Text>
-        <View style={styles.settingItem}>
-          <Text style={styles.settingText}>Version</Text>
-          <Text style={styles.settingValue}>1.0.0</Text>
+            return (
+              <TouchableOpacity
+                key={item.label}
+                style={[styles.settingItem, isLast && styles.settingItemLast]}
+                activeOpacity={0.7}
+              >
+                <View style={styles.settingLeft}>
+                  {item.icon && (
+                    <View style={styles.settingIconWrapper}>
+                      <Ionicons name={item.icon} size={20} color={GeistColors.foreground} />
+                    </View>
+                  )}
+                  <Text style={styles.settingText}>{item.label}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={GeistColors.gray500} />
+              </TouchableOpacity>
+            );
+          })}
         </View>
-        <TouchableOpacity style={styles.settingItem}>
-          <View style={styles.settingLeft}>
-            <Ionicons name="information-circle-outline" size={20} color={GeistColors.foreground} />
-            <Text style={styles.settingText}>Help & Support</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={16} color={GeistColors.gray400} />
-        </TouchableOpacity>
-      </View>
+      ))}
     </ScrollView>
   );
 };
@@ -70,50 +96,66 @@ const SettingsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: GeistColors.background,
+    backgroundColor: GeistColors.canvas,
+  },
+  content: {
+    paddingHorizontal: GeistSpacing.lg,
+    paddingBottom: GeistSpacing.xxl,
+    gap: GeistSpacing.lg,
   },
   section: {
-    backgroundColor: GeistColors.background,
-    marginTop: GeistSpacing.md,
-    paddingHorizontal: GeistSpacing.md,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: GeistColors.border,
+    ...GeistComponents.card.default,
+    backgroundColor: GeistColors.surface,
+    borderRadius: GeistBorderRadius.lg,
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+    gap: 0,
   },
   sectionTitle: {
-    fontSize: GeistFontSizes.xs,
-    fontWeight: '500',
-    color: GeistColors.gray600,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    paddingVertical: GeistSpacing.sm,
-    paddingHorizontal: GeistSpacing.xs,
+    ...GeistTypography.caption,
+    color: GeistColors.gray700,
+    paddingHorizontal: GeistSpacing.lg,
+    paddingTop: GeistSpacing.lg,
+    paddingBottom: GeistSpacing.sm,
   },
   settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: GeistSpacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: GeistColors.border,
+    paddingHorizontal: GeistSpacing.lg,
+    borderTopWidth: GeistBorders.medium,
+    borderTopColor: GeistColors.border,
     minHeight: 56,
+    backgroundColor: GeistColors.surface,
+  },
+  settingItemLast: {
+    borderBottomLeftRadius: GeistBorderRadius.lg,
+    borderBottomRightRadius: GeistBorderRadius.lg,
   },
   settingLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: GeistSpacing.sm,
+  },
+  settingIconWrapper: {
+    width: 36,
+    height: 36,
+    borderRadius: GeistBorderRadius.md,
+    borderWidth: GeistBorders.medium,
+    borderColor: GeistColors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: GeistColors.surface,
+    ...GeistShadows.sm,
   },
   settingText: {
-    fontSize: GeistFontSizes.sm,
+    ...GeistTypography.bodyStrong,
     color: GeistColors.foreground,
-    marginLeft: GeistSpacing.sm,
-    includeFontPadding: false,
-    textAlignVertical: 'center',
   },
   settingValue: {
-    fontSize: GeistFontSizes.sm,
-    color: GeistColors.gray500,
-    includeFontPadding: false,
-    textAlignVertical: 'center',
+    ...GeistTypography.body,
+    color: GeistColors.gray600,
   },
 });
 

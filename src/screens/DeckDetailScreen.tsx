@@ -12,7 +12,16 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
 import { useStore } from '../store/useStore';
-import { GeistColors, GeistSpacing, GeistFontSizes, GeistBorderRadius } from '../theme/geist';
+import {
+  GeistColors,
+  GeistSpacing,
+  GeistFontSizes,
+  GeistBorderRadius,
+  GeistBorders,
+  GeistShadows,
+  GeistTypography,
+  GeistComponents,
+} from '../theme/geist';
 import ImportExportModal from '../components/ImportExportModal';
 import { cardRepository } from '../database/cardRepository';
 
@@ -133,7 +142,7 @@ const DeckDetailScreen = () => {
           style={[styles.actionButton, styles.primaryButton]}
           onPress={handleStartStudy}
         >
-          <Ionicons name="school" size={20} color={GeistColors.background} />
+          <Ionicons name="school" size={20} color={GeistColors.foreground} />
           <Text style={styles.actionButtonText}>Start Study Session</Text>
         </TouchableOpacity>
 
@@ -142,7 +151,7 @@ const DeckDetailScreen = () => {
           onPress={() => navigation.navigate('CardList', { deckId })}
         >
           <Ionicons name="list" size={20} color={GeistColors.foreground} />
-          <Text style={[styles.actionButtonText, { color: GeistColors.foreground }]}>
+          <Text style={[styles.actionButtonText, styles.actionButtonTextNeutral]}>
             View All Cards
           </Text>
         </TouchableOpacity>
@@ -152,7 +161,7 @@ const DeckDetailScreen = () => {
           onPress={() => navigation.navigate('DeckSettings', { deckId })}
         >
           <Ionicons name="settings-outline" size={20} color={GeistColors.foreground} />
-          <Text style={[styles.actionButtonText, { color: GeistColors.foreground }]}>
+          <Text style={[styles.actionButtonText, styles.actionButtonTextNeutral]}>
             Deck Settings
           </Text>
         </TouchableOpacity>
@@ -162,7 +171,7 @@ const DeckDetailScreen = () => {
           onPress={() => setShowImportModal(true)}
         >
           <Ionicons name="download-outline" size={20} color={GeistColors.foreground} />
-          <Text style={[styles.actionButtonText, { color: GeistColors.foreground }]}>
+          <Text style={[styles.actionButtonText, styles.actionButtonTextNeutral]}>
             Import Cards
           </Text>
         </TouchableOpacity>
@@ -172,7 +181,7 @@ const DeckDetailScreen = () => {
           onPress={() => setShowExportModal(true)}
         >
           <Ionicons name="share-outline" size={20} color={GeistColors.foreground} />
-          <Text style={[styles.actionButtonText, { color: GeistColors.foreground }]}>
+          <Text style={[styles.actionButtonText, styles.actionButtonTextNeutral]}>
             Export Deck
           </Text>
         </TouchableOpacity>
@@ -225,40 +234,40 @@ const DeckDetailScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: GeistColors.background,
+    backgroundColor: GeistColors.canvas,
   },
   header: {
-    backgroundColor: GeistColors.background,
-    padding: GeistSpacing.lg,
-    borderBottomWidth: 1,
+    backgroundColor: GeistColors.surface,
+    padding: GeistSpacing.xl,
+    borderBottomWidth: GeistBorders.thick,
     borderBottomColor: GeistColors.border,
+    ...GeistShadows.sm,
   },
   deckName: {
-    fontSize: GeistFontSizes.xxxl,
-    fontWeight: '600',
+    ...GeistTypography.headline,
     color: GeistColors.foreground,
-    marginBottom: GeistSpacing.xs,
+    backgroundColor: GeistColors.violetLight,
+    paddingHorizontal: GeistSpacing.sm,
+    paddingVertical: 4,
+    borderWidth: GeistBorders.medium,
+    borderColor: GeistColors.border,
+    borderRadius: GeistBorderRadius.sm,
   },
   deckDescription: {
-    fontSize: GeistFontSizes.base,
-    color: GeistColors.gray600,
+    ...GeistTypography.body,
+    color: GeistColors.gray700,
     lineHeight: 24,
+    marginTop: GeistSpacing.sm,
   },
   statsContainer: {
-    backgroundColor: GeistColors.background,
-    margin: GeistSpacing.md,
-    padding: GeistSpacing.lg,
-    borderWidth: 1,
-    borderColor: GeistColors.border,
-    borderRadius: GeistBorderRadius.md,
+    ...GeistComponents.card.spacious,
+    margin: GeistSpacing.lg,
+    backgroundColor: GeistColors.pastelViolet,
   },
   sectionTitle: {
-    fontSize: GeistFontSizes.xs,
-    fontWeight: '500',
-    color: GeistColors.gray600,
-    marginBottom: GeistSpacing.md,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    ...GeistTypography.caption,
+    color: GeistColors.gray800,
+    marginBottom: GeistSpacing.lg,
   },
   statsGrid: {
     flexDirection: 'row',
@@ -269,76 +278,69 @@ const styles = StyleSheet.create({
   statBox: {
     width: '30%',
     alignItems: 'center',
+    backgroundColor: GeistColors.surface,
+    borderWidth: GeistBorders.medium,
+    borderColor: GeistColors.border,
+    borderRadius: GeistBorderRadius.sm,
+    paddingVertical: GeistSpacing.md,
+    ...GeistShadows.sm,
   },
   statValue: {
     fontSize: GeistFontSizes.xxl,
-    fontWeight: '600',
+    fontWeight: '700',
     color: GeistColors.foreground,
   },
   statLabel: {
-    fontSize: GeistFontSizes.xs,
-    color: GeistColors.gray500,
-    marginTop: GeistSpacing.xs,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    ...GeistTypography.caption,
+    color: GeistColors.gray600,
   },
   actionsContainer: {
-    backgroundColor: GeistColors.background,
-    margin: GeistSpacing.md,
+    ...GeistComponents.card.spacious,
+    backgroundColor: GeistColors.surface,
+    marginHorizontal: GeistSpacing.lg,
     marginTop: 0,
-    padding: GeistSpacing.lg,
-    borderWidth: 1,
-    borderColor: GeistColors.border,
-    borderRadius: GeistBorderRadius.md,
   },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: GeistSpacing.md,
-    paddingVertical: GeistSpacing.md,
-    borderRadius: GeistBorderRadius.sm,
-    borderWidth: 1,
-    borderColor: GeistColors.border,
-    marginBottom: GeistSpacing.sm,
-    minHeight: 52,
+    gap: GeistSpacing.sm,
+    ...GeistComponents.button.outline,
+    backgroundColor: GeistColors.surface,
+    marginBottom: GeistSpacing.md,
+    minHeight: 56,
   },
   primaryButton: {
-    backgroundColor: GeistColors.foreground,
-    borderColor: GeistColors.foreground,
+    ...GeistComponents.button.primary,
+    gap: GeistSpacing.sm,
   },
   actionButtonText: {
-    fontSize: GeistFontSizes.sm,
-    fontWeight: '500',
-    color: GeistColors.background,
-    marginLeft: GeistSpacing.sm,
-    includeFontPadding: false,
-    textAlignVertical: 'center',
+    ...GeistTypography.button,
+    color: GeistColors.foreground,
+  },
+  actionButtonTextNeutral: {
+    color: GeistColors.foreground,
   },
   infoContainer: {
-    backgroundColor: GeistColors.background,
-    margin: GeistSpacing.md,
-    marginTop: 0,
-    padding: GeistSpacing.lg,
-    borderWidth: 1,
-    borderColor: GeistColors.border,
-    borderRadius: GeistBorderRadius.md,
-    marginBottom: GeistSpacing.xl,
+    ...GeistComponents.card.spacious,
+    backgroundColor: GeistColors.pastelTeal,
+    marginHorizontal: GeistSpacing.lg,
+    marginTop: GeistSpacing.lg,
+    marginBottom: GeistSpacing.xxl,
   },
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: GeistSpacing.sm,
-    borderBottomWidth: 1,
+    paddingVertical: GeistSpacing.md,
+    borderBottomWidth: GeistBorders.medium,
     borderBottomColor: GeistColors.border,
   },
   infoLabel: {
-    fontSize: GeistFontSizes.sm,
-    color: GeistColors.gray600,
+    ...GeistTypography.body,
+    color: GeistColors.gray700,
   },
   infoValue: {
-    fontSize: GeistFontSizes.sm,
+    ...GeistTypography.bodyStrong,
     color: GeistColors.foreground,
-    fontWeight: '500',
   },
 });
 

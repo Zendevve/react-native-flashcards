@@ -12,7 +12,16 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
-import { GeistColors, GeistSpacing, GeistFontSizes, GeistBorderRadius } from '../theme/geist';
+import {
+  GeistColors,
+  GeistSpacing,
+  GeistFontSizes,
+  GeistBorderRadius,
+  GeistBorders,
+  GeistComponents,
+  GeistTypography,
+} from '../theme/geist';
+import { useResponsive } from '../hooks/useResponsive';
 import { parseCSV, exportToCSV, validateCSV, downloadCSVWeb, DEFAULT_CSV_OPTIONS } from '../utils/csvImportExport';
 import { Card } from '../types';
 
@@ -39,6 +48,9 @@ const ImportExportModal: React.FC<ImportExportModalProps> = ({
   const [hasHeader, setHasHeader] = useState(true);
   const [previewData, setPreviewData] = useState<{ front: string; back: string }[]>([]);
   const [csvContent, setCsvContent] = useState('');
+
+  const { isPhone } = useResponsive();
+  const isMobile = isPhone;
 
   const handlePickFile = async () => {
     try {
@@ -249,13 +261,20 @@ const ImportExportModal: React.FC<ImportExportModalProps> = ({
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.content}>
+          <ScrollView
+            style={styles.content}
+            contentContainerStyle={styles.contentInner}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
             {mode === 'import' ? renderImportUI() : renderExportUI()}
           </ScrollView>
 
-          <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
-            <Text style={styles.cancelButtonText}>Cancel</Text>
-          </TouchableOpacity>
+          <View style={styles.cancelButtonContainer}>
+            <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
+              <Text style={styles.cancelButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </Modal>
@@ -269,149 +288,138 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   container: {
-    backgroundColor: GeistColors.background,
-    borderTopLeftRadius: GeistBorderRadius.md,
-    borderTopRightRadius: GeistBorderRadius.md,
-    maxHeight: '90%',
-    borderWidth: 1,
-    borderColor: GeistColors.border,
+    ...GeistComponents.card.spacious,
+    borderTopLeftRadius: GeistBorderRadius.lg,
+    borderTopRightRadius: GeistBorderRadius.lg,
+    borderBottomLeftRadius: GeistBorderRadius.lg,
+    borderBottomRightRadius: GeistBorderRadius.lg,
+    backgroundColor: GeistColors.surface,
+    maxHeight: '92%',
+    marginHorizontal: GeistSpacing.lg,
+    marginBottom: GeistSpacing.xl,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: GeistSpacing.lg,
-    borderBottomWidth: 1,
+    borderBottomWidth: GeistBorders.medium,
     borderBottomColor: GeistColors.border,
   },
   title: {
-    fontSize: GeistFontSizes.xl,
-    fontWeight: '600',
+    ...GeistTypography.headline,
     color: GeistColors.foreground,
   },
   content: {
-    padding: GeistSpacing.lg,
+    paddingHorizontal: GeistSpacing.lg,
+    paddingVertical: GeistSpacing.md,
+  },
+  contentInner: {
+    gap: GeistSpacing.md,
   },
   label: {
-    fontSize: GeistFontSizes.xs,
-    fontWeight: '500',
-    color: GeistColors.gray600,
-    marginBottom: GeistSpacing.sm,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    ...GeistTypography.caption,
+    color: GeistColors.gray700,
   },
   delimiterButtons: {
     flexDirection: 'row',
     gap: GeistSpacing.sm,
     marginBottom: GeistSpacing.md,
+    flexWrap: 'wrap',
   },
   delimiterButton: {
     flex: 1,
-    paddingVertical: GeistSpacing.sm,
-    borderRadius: GeistBorderRadius.sm,
-    borderWidth: 1,
-    borderColor: GeistColors.border,
-    alignItems: 'center',
+    minWidth: 120,
+    ...GeistComponents.button.outline,
+    backgroundColor: GeistColors.surface,
   },
   delimiterButtonActive: {
-    backgroundColor: GeistColors.foreground,
-    borderColor: GeistColors.foreground,
+    backgroundColor: GeistColors.violet,
+    borderColor: GeistColors.border,
   },
   delimiterText: {
-    fontSize: GeistFontSizes.sm,
+    ...GeistTypography.button,
     color: GeistColors.foreground,
-    fontWeight: '500',
   },
   delimiterTextActive: {
-    color: GeistColors.background,
+    color: GeistColors.foreground,
   },
   checkboxRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: GeistSpacing.lg,
+    gap: GeistSpacing.sm,
   },
   checkbox: {
-    width: 20,
-    height: 20,
+    width: 24,
+    height: 24,
     borderRadius: GeistBorderRadius.sm,
-    borderWidth: 1,
+    borderWidth: GeistBorders.medium,
     borderColor: GeistColors.border,
-    marginRight: GeistSpacing.sm,
     alignItems: 'center',
     justifyContent: 'center',
   },
   checkboxChecked: {
-    backgroundColor: GeistColors.foreground,
-    borderColor: GeistColors.foreground,
+    backgroundColor: GeistColors.violet,
+    borderColor: GeistColors.border,
   },
   checkboxLabel: {
-    fontSize: GeistFontSizes.sm,
+    ...GeistTypography.body,
     color: GeistColors.foreground,
   },
   primaryButton: {
+    ...GeistComponents.button.primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: GeistColors.foreground,
-    borderRadius: GeistBorderRadius.sm,
-    paddingVertical: GeistSpacing.md,
-    marginBottom: GeistSpacing.md,
-    minHeight: 48,
     gap: GeistSpacing.sm,
   },
   primaryButtonText: {
-    color: GeistColors.background,
-    fontSize: GeistFontSizes.sm,
-    fontWeight: '500',
-    includeFontPadding: false,
-    textAlignVertical: 'center',
+    ...GeistTypography.button,
+    color: GeistColors.foreground,
   },
-  cancelButton: {
+  cancelButtonContainer: {
     padding: GeistSpacing.lg,
-    borderTopWidth: 1,
+    borderTopWidth: GeistBorders.medium,
     borderTopColor: GeistColors.border,
     alignItems: 'center',
   },
+  cancelButton: {
+    ...GeistComponents.button.outline,
+    backgroundColor: GeistColors.surface,
+  },
   cancelButtonText: {
-    fontSize: GeistFontSizes.sm,
-    color: GeistColors.gray600,
-    fontWeight: '500',
-    includeFontPadding: false,
-    textAlignVertical: 'center',
+    ...GeistTypography.button,
+    color: GeistColors.gray700,
   },
   infoText: {
-    fontSize: GeistFontSizes.sm,
-    color: GeistColors.gray600,
+    ...GeistTypography.body,
+    color: GeistColors.gray700,
     marginBottom: GeistSpacing.lg,
-    lineHeight: 20,
+    lineHeight: 22,
   },
   previewTitle: {
-    fontSize: GeistFontSizes.xs,
-    fontWeight: '500',
-    color: GeistColors.gray600,
+    ...GeistTypography.caption,
+    color: GeistColors.gray700,
     marginTop: GeistSpacing.md,
     marginBottom: GeistSpacing.sm,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
   previewContainer: {
-    maxHeight: 200,
+    maxHeight: 240,
     marginBottom: GeistSpacing.md,
   },
   previewCard: {
-    borderWidth: 1,
-    borderColor: GeistColors.border,
-    borderRadius: GeistBorderRadius.sm,
-    padding: GeistSpacing.sm,
+    ...GeistComponents.card.default,
+    backgroundColor: GeistColors.surface,
     marginBottom: GeistSpacing.sm,
   },
   previewLabel: {
-    fontSize: GeistFontSizes.xs,
-    color: GeistColors.gray500,
-    marginBottom: 2,
+    ...GeistTypography.caption,
+    color: GeistColors.gray600,
+    marginBottom: GeistSpacing.xs,
   },
   previewText: {
-    fontSize: GeistFontSizes.sm,
+    ...GeistTypography.body,
     color: GeistColors.foreground,
     marginBottom: GeistSpacing.xs,
   },

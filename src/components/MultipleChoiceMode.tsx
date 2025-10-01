@@ -1,7 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { GeistColors, GeistSpacing, GeistFontSizes, GeistBorderRadius } from '../theme/geist';
+import {
+  GeistColors,
+  GeistSpacing,
+  GeistFontSizes,
+  GeistBorderRadius,
+  GeistBorders,
+  GeistComponents,
+  GeistTypography,
+} from '../theme/geist';
+import { useResponsive } from '../hooks/useResponsive';
 import { Card } from '../types';
 
 interface MultipleChoiceModeProps {
@@ -10,105 +19,71 @@ interface MultipleChoiceModeProps {
   onAnswer: (correct: boolean) => void;
 }
 
-const MultipleChoiceMode: React.FC<MultipleChoiceModeProps> = ({
-  currentCard,
-  allCards,
-  onAnswer,
-}) => {
+const MultipleChoiceMode: React.FC<MultipleChoiceModeProps> = ({ currentCard, allCards, onAnswer }) => {
   const [options, setOptions] = useState<string[]>([]);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [showResult, setShowResult] = useState(false);
+  const { isPhone } = useResponsive();
+
+  const distractors = useMemo(() => allCards.filter((card) => card.id !== currentCard.id), [allCards, currentCard.id]);
 
   useEffect(() => {
-    generateOptions();
-    setSelectedOption(null);
-    setShowResult(false);
-  }, [currentCard]);
-
-  const generateOptions = () => {
-    // Get 3 random wrong answers from other cards
-    const wrongOptions = allCards
-      .filter((card) => card.id !== currentCard.id)
+    const shuffled = [...distractors]
       .sort(() => Math.random() - 0.5)
       .slice(0, 3)
       .map((card) => card.back);
-
-    // Add correct answer
-    const allOptions = [...wrongOptions, currentCard.back];
-    
-    // Shuffle
-    const shuffled = allOptions.sort(() => Math.random() - 0.5);
-    setOptions(shuffled);
-  };
+    const combined = [...shuffled, currentCard.back].sort(() => Math.random() - 0.5);
+    setOptions(combined);
+    setSelectedOption(null);
+    setShowResult(false);
+  }, [currentCard, distractors]);
 
   const handleOptionSelect = (option: string) => {
+    if (showResult) return;
     setSelectedOption(option);
     setShowResult(true);
-    
     const isCorrect = option === currentCard.back;
-    
-    // Wait a bit before calling onAnswer to show feedback
-    setTimeout(() => {
-      onAnswer(isCorrect);
-    }, 1000);
-  };
-
-  const getOptionStyle = (option: string) => {
-    if (!showResult) {
-      return styles.option;
-    }
-    
-    if (option === currentCard.back) {
-      return [styles.option, styles.optionCorrect];
-    }
-    
-    if (option === selectedOption && option !== currentCard.back) {
-      return [styles.option, styles.optionWrong];
-    }
-    
-    return [styles.option, styles.optionDisabled];
-  };
-
-  const getOptionIcon = (option: string) => {
-    if (!showResult) return null;
-    
-    if (option === currentCard.back) {
-      return <Ionicons name="checkmark-circle" size={20} color={GeistColors.background} />;
-    }
-    
-    if (option === selectedOption && option !== currentCard.back) {
-      return <Ionicons name="close-circle" size={20} color={GeistColors.background} />;
-    }
-    
-    return null;
+    setTimeout(() => onAnswer(isCorrect), 1000);
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.questionContainer}>
-        <Text style={styles.questionLabel}>Question</Text>
+    <View style={[styles.container, isPhone && styles.containerMobile]}>
+      <View style={styles.questionCard}>
+        <Text style={styles.questionBadge}>Question</Text>
         <Text style={styles.questionText}>{currentCard.front}</Text>
       </View>
 
-      <View style={styles.optionsContainer}>
+      <View style={styles.optionsWrapper}>
         <Text style={styles.optionsLabel}>Choose the correct answer:</Text>
-        {options.map((option, index) => (
-          <TouchableOpacity
-            key={index}
-            style={getOptionStyle(option)}
-            onPress={() => !showResult && handleOptionSelect(option)}
-            disabled={showResult}
-          >
-            <Text style={[
-              styles.optionText,
-              showResult && option === currentCard.back && styles.optionTextCorrect,
-              showResult && option === selectedOption && option !== currentCard.back && styles.optionTextWrong,
-            ]}>
-              {option}
-            </Text>
-            {getOptionIcon(option)}
-          </TouchableOpacity>
-        ))}
+        {options.map((option) => {
+          const isCorrect = showResult && option === currentCard.back;
+          const isWrong = showResult && option === selectedOption && option !== currentCard.back;
+          return (
+            <TouchableOpacity
+              key={`${option}`}
+              style={[
+                styles.optionCard,
+                isCorrect && styles.optionCardCorrect,
+                isWrong && styles.optionCardWrong,
+                showResult && !isCorrect && !isWrong && styles.optionCardDisabled,
+              ]}
+              activeOpacity={0.8}
+              onPress={() => handleOptionSelect(option)}
+              disabled={showResult}
+            >
+              <Text style={[styles.optionText, isCorrect && styles.optionTextCorrect, isWrong && styles.optionTextWrong]}>
+                {option}
+              </Text>
+              {showResult && (
+                <Ionicons
+                  name={isCorrect ? 'checkmark-circle' : isWrong ? 'close-circle' : 'ellipse-outline'}
+                  size={22}
+                  color={isCorrect ? GeistColors.tealDark : isWrong ? GeistColors.coralDark : GeistColors.gray400}
+                />
+              )}
+            </TouchableOpacity>
+          );
+        })}
       </View>
     </View>
   );
@@ -118,75 +93,68 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: GeistSpacing.lg,
+    gap: GeistSpacing.lg,
   },
-  questionContainer: {
-    borderWidth: 1,
+  containerMobile: {
+    padding: GeistSpacing.md,
+    gap: GeistSpacing.md,
+  },
+  questionCard: {
+    ...GeistComponents.card.spacious,
+    backgroundColor: GeistColors.pastelViolet,
+    gap: GeistSpacing.md,
+    alignItems: 'center',
+  },
+  questionBadge: {
+    ...GeistTypography.badge,
+    backgroundColor: GeistColors.violetLight,
+    borderWidth: GeistBorders.medium,
     borderColor: GeistColors.border,
-    borderRadius: GeistBorderRadius.md,
-    padding: GeistSpacing.xl,
-    marginBottom: GeistSpacing.xl,
-    minHeight: 150,
-    justifyContent: 'center',
-  },
-  questionLabel: {
-    position: 'absolute',
-    top: GeistSpacing.md,
-    left: GeistSpacing.md,
-    fontSize: GeistFontSizes.xs,
-    color: GeistColors.gray500,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    fontWeight: '500',
+    borderRadius: GeistBorderRadius.full,
+    paddingHorizontal: GeistSpacing.md,
+    paddingVertical: GeistSpacing.xs,
+    color: GeistColors.foreground,
   },
   questionText: {
-    fontSize: GeistFontSizes.xxl,
-    color: GeistColors.foreground,
+    ...GeistTypography.title,
     textAlign: 'center',
-    lineHeight: 32,
+    color: GeistColors.foreground,
   },
-  optionsContainer: {
-    flex: 1,
+  optionsWrapper: {
+    gap: GeistSpacing.sm,
   },
   optionsLabel: {
-    fontSize: GeistFontSizes.sm,
-    color: GeistColors.gray600,
-    marginBottom: GeistSpacing.md,
+    ...GeistTypography.caption,
+    color: GeistColors.gray700,
   },
-  option: {
+  optionCard: {
+    ...GeistComponents.listItem,
+    backgroundColor: GeistColors.surface,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: GeistSpacing.md,
-    borderWidth: 1,
-    borderColor: GeistColors.border,
-    borderRadius: GeistBorderRadius.sm,
-    marginBottom: GeistSpacing.sm,
-    minHeight: 52,
+    minHeight: 58,
   },
-  optionCorrect: {
-    backgroundColor: GeistColors.foreground,
-    borderColor: GeistColors.foreground,
+  optionCardCorrect: {
+    backgroundColor: GeistColors.tealLight,
   },
-  optionWrong: {
-    backgroundColor: GeistColors.error,
-    borderColor: GeistColors.error,
+  optionCardWrong: {
+    backgroundColor: GeistColors.coralLight,
   },
-  optionDisabled: {
-    opacity: 0.5,
+  optionCardDisabled: {
+    opacity: 0.6,
   },
   optionText: {
-    fontSize: GeistFontSizes.base,
+    ...GeistTypography.bodyStrong,
     color: GeistColors.foreground,
     flex: 1,
-    includeFontPadding: false,
-    textAlignVertical: 'center',
+    marginRight: GeistSpacing.md,
   },
   optionTextCorrect: {
-    color: GeistColors.background,
-    fontWeight: '500',
+    color: GeistColors.tealDark,
   },
   optionTextWrong: {
-    color: GeistColors.background,
+    color: GeistColors.coralDark,
   },
 });
 

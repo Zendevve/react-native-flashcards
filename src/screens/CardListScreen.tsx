@@ -8,13 +8,25 @@ import {
   TextInput,
   Alert,
   Modal,
+  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../types/navigation';
 import { useStore } from '../store/useStore';
 import { Card } from '../types';
-import { GeistColors, GeistSpacing, GeistFontSizes, GeistBorderRadius, GeistShadows } from '../theme/geist';
+import {
+  GeistColors,
+  GeistSpacing,
+  GeistFontSizes,
+  GeistBorderRadius,
+  GeistShadows,
+  GeistFontWeights,
+  GeistBorders,
+  GeistComponents,
+  GeistTypography,
+} from '../theme/geist';
+import { useResponsive } from '../hooks/useResponsive';
 
 type RouteProps = RouteProp<RootStackParamList, 'CardList'>;
 
@@ -23,6 +35,8 @@ const CardListScreen = () => {
   const { deckId } = route.params;
 
   const { cards, loadCards, createCard, updateCard, deleteCard, searchCards } = useStore();
+  const { isTablet, isPhone } = useResponsive();
+  const isMobile = isPhone;
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingCard, setEditingCard] = useState<Card | null>(null);
@@ -118,7 +132,7 @@ const CardListScreen = () => {
   };
 
   const renderCardItem = ({ item }: { item: Card }) => (
-    <View style={styles.cardItem}>
+    <View style={[styles.cardItem, isMobile && styles.cardItemMobile]}>
       <View style={styles.cardContent}>
         <View style={styles.cardSide}>
           <Text style={styles.sideLabel}>Front:</Text>
@@ -141,7 +155,7 @@ const CardListScreen = () => {
           </Text>
         </View>
       </View>
-      <View style={styles.cardActions}>
+      <View style={[styles.cardActions, isMobile && styles.cardActionsMobile]}>
         <TouchableOpacity
           style={styles.iconButton}
           onPress={() => handleEditCard(item)}
@@ -162,7 +176,7 @@ const CardListScreen = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.searchBar}>
-          <Ionicons name="search" size={16} color={GeistColors.gray500} />
+          <Ionicons name="search" size={16} color={GeistColors.foreground} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search cards..."
@@ -177,7 +191,7 @@ const CardListScreen = () => {
         data={cards}
         renderItem={renderCardItem}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[styles.listContent, isMobile && styles.listContentMobile]}
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Ionicons name="documents-outline" size={64} color={GeistColors.gray300} />
@@ -189,17 +203,34 @@ const CardListScreen = () => {
         }
       />
 
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => {
-          setEditingCard(null);
-          setFrontText('');
-          setBackText('');
-          setShowCreateModal(true);
-        }}
-      >
-        <Ionicons name="add" size={24} color={GeistColors.background} />
-      </TouchableOpacity>
+      {isMobile ? (
+        <View style={styles.mobileActionBar}>
+          <TouchableOpacity
+            style={styles.mobileActionButton}
+            onPress={() => {
+              setEditingCard(null);
+              setFrontText('');
+              setBackText('');
+              setShowCreateModal(true);
+            }}
+          >
+            <Ionicons name="add-circle" size={24} color={GeistColors.foreground} />
+            <Text style={styles.mobileActionText}>New Card</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => {
+            setEditingCard(null);
+            setFrontText('');
+            setBackText('');
+            setShowCreateModal(true);
+          }}
+        >
+          <Ionicons name="add" size={24} color={GeistColors.foreground} />
+        </TouchableOpacity>
+      )}
 
       <Modal
         visible={showCreateModal}
@@ -208,7 +239,7 @@ const CardListScreen = () => {
         onRequestClose={() => setShowCreateModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, isMobile && styles.modalContentMobile]}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>
                 {editingCard ? 'Edit Card' : 'New Card'}
@@ -218,48 +249,54 @@ const CardListScreen = () => {
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.inputLabel}>Front (Question):</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Enter question or term..."
-              placeholderTextColor={GeistColors.gray400}
-              value={frontText}
-              onChangeText={setFrontText}
-              multiline
-              numberOfLines={4}
-              autoFocus
-            />
+            <ScrollView
+              contentContainerStyle={styles.modalForm}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              <Text style={styles.inputLabel}>Front (Question):</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="Enter question or term..."
+                placeholderTextColor={GeistColors.gray400}
+                value={frontText}
+                onChangeText={setFrontText}
+                multiline
+                numberOfLines={4}
+                autoFocus
+              />
 
-            <Text style={styles.inputLabel}>Back (Answer):</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Enter answer or definition..."
-              placeholderTextColor={GeistColors.gray400}
-              value={backText}
-              onChangeText={setBackText}
-              multiline
-              numberOfLines={4}
-            />
+              <Text style={styles.inputLabel}>Back (Answer):</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="Enter answer or definition..."
+                placeholderTextColor={GeistColors.gray400}
+                value={backText}
+                onChangeText={setBackText}
+                multiline
+                numberOfLines={4}
+              />
 
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.button, styles.cancelButton]}
-                onPress={() => {
-                  setShowCreateModal(false);
-                  setEditingCard(null);
-                  setFrontText('');
-                  setBackText('');
-                }}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.button, styles.saveButton]}
-                onPress={handleSaveCard}
-              >
-                <Text style={styles.saveButtonText}>Save</Text>
-              </TouchableOpacity>
-            </View>
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.button, styles.cancelButton]}
+                  onPress={() => {
+                    setShowCreateModal(false);
+                    setEditingCard(null);
+                    setFrontText('');
+                    setBackText('');
+                  }}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.button, styles.saveButton]}
+                  onPress={handleSaveCard}
+                >
+                  <Text style={styles.saveButtonText}>Save</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -270,134 +307,156 @@ const CardListScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: GeistColors.background,
+    backgroundColor: GeistColors.canvas,
   },
   header: {
-    backgroundColor: GeistColors.background,
-    padding: GeistSpacing.md,
-    borderBottomWidth: 1,
+    backgroundColor: GeistColors.surface,
+    padding: GeistSpacing.lg,
+    borderBottomWidth: GeistBorders.thick,
     borderBottomColor: GeistColors.border,
+    ...GeistShadows.sm,
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: GeistColors.gray50,
-    borderWidth: 1,
-    borderColor: GeistColors.border,
-    borderRadius: GeistBorderRadius.sm,
-    paddingHorizontal: GeistSpacing.sm,
-    height: 44,
+    ...GeistComponents.input,
+    backgroundColor: GeistColors.surface,
+    gap: GeistSpacing.sm,
   },
   searchInput: {
     flex: 1,
-    marginLeft: GeistSpacing.sm,
-    fontSize: GeistFontSizes.sm,
+    marginLeft: 0,
+    fontSize: GeistFontSizes.base,
     color: GeistColors.foreground,
     paddingVertical: 0,
     includeFontPadding: false,
   },
   listContent: {
-    padding: GeistSpacing.md,
+    padding: GeistSpacing.lg,
+    gap: GeistSpacing.md,
+  },
+  listContentMobile: {
+    paddingBottom: GeistSpacing.xl * 2,
   },
   cardItem: {
-    backgroundColor: GeistColors.background,
-    borderWidth: 1,
-    borderColor: GeistColors.border,
-    borderRadius: GeistBorderRadius.md,
-    padding: GeistSpacing.md,
-    marginBottom: GeistSpacing.sm,
+    ...GeistComponents.card.default,
+    backgroundColor: GeistColors.surface,
+    marginBottom: GeistSpacing.md,
     flexDirection: 'row',
+    gap: GeistSpacing.md,
+  },
+  cardItemMobile: {
+    flexDirection: 'column',
   },
   cardContent: {
     flex: 1,
+    gap: GeistSpacing.sm,
   },
   cardSide: {
-    marginBottom: GeistSpacing.sm,
+    marginBottom: 0,
   },
   sideLabel: {
-    fontSize: GeistFontSizes.xs,
-    color: GeistColors.gray500,
+    ...GeistTypography.caption,
+    color: GeistColors.gray700,
     marginBottom: GeistSpacing.xs,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
   cardText: {
-    fontSize: GeistFontSizes.sm,
+    ...GeistTypography.body,
     color: GeistColors.foreground,
     lineHeight: 20,
   },
   cardMeta: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: GeistSpacing.xs,
+    gap: GeistSpacing.sm,
   },
   stateBadge: {
-    paddingHorizontal: GeistSpacing.xs,
-    paddingVertical: 2,
-    borderRadius: GeistBorderRadius.sm,
-    marginRight: GeistSpacing.sm,
-    borderWidth: 1,
-    borderColor: GeistColors.border,
-    backgroundColor: GeistColors.gray50,
+    ...GeistComponents.badge,
   },
   stateText: {
+    ...GeistTypography.badge,
     color: GeistColors.foreground,
-    fontSize: GeistFontSizes.xs,
-    fontWeight: '500',
   },
   intervalText: {
-    fontSize: GeistFontSizes.xs,
-    color: GeistColors.gray500,
+    ...GeistTypography.caption,
+    color: GeistColors.gray600,
   },
   cardActions: {
     justifyContent: 'center',
     marginLeft: GeistSpacing.sm,
+    flexDirection: 'column',
+    gap: GeistSpacing.sm,
+  },
+  cardActionsMobile: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginLeft: 0,
   },
   iconButton: {
-    padding: GeistSpacing.xs,
-    marginVertical: GeistSpacing.xs,
+    padding: GeistSpacing.sm,
+    borderWidth: GeistBorders.medium,
+    borderColor: GeistColors.border,
+    borderRadius: GeistBorderRadius.sm,
+    backgroundColor: GeistColors.surface,
   },
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: GeistSpacing.xxxl,
+    gap: GeistSpacing.md,
   },
   emptyText: {
-    fontSize: GeistFontSizes.lg,
-    fontWeight: '500',
-    color: GeistColors.gray400,
-    marginTop: GeistSpacing.md,
+    ...GeistTypography.title,
+    color: GeistColors.foreground,
   },
   emptySubtext: {
-    fontSize: GeistFontSizes.sm,
-    color: GeistColors.gray400,
-    marginTop: GeistSpacing.xs,
+    ...GeistTypography.body,
+    color: GeistColors.gray600,
   },
   fab: {
     position: 'absolute',
     right: GeistSpacing.lg,
     bottom: GeistSpacing.lg,
-    width: 56,
-    height: 56,
-    borderRadius: GeistBorderRadius.sm,
-    backgroundColor: GeistColors.foreground,
+    ...GeistComponents.fab,
+  },
+  mobileActionBar: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: GeistSpacing.lg,
+    paddingTop: GeistSpacing.md,
+    paddingBottom: GeistSpacing.lg,
+    backgroundColor: GeistColors.canvas,
+    borderTopWidth: GeistBorders.thick,
+    borderTopColor: GeistColors.border,
+    ...GeistShadows.sm,
+  },
+  mobileActionButton: {
+    ...GeistComponents.button.primary,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    ...GeistShadows.md,
+    gap: GeistSpacing.sm,
+  },
+  mobileActionText: {
+    ...GeistTypography.button,
+    color: GeistColors.foreground,
   },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
-    padding: GeistSpacing.md,
+    padding: GeistSpacing.lg,
   },
   modalContent: {
-    backgroundColor: GeistColors.background,
-    borderWidth: 1,
-    borderColor: GeistColors.border,
-    borderRadius: GeistBorderRadius.md,
+    ...GeistComponents.card.spacious,
+    backgroundColor: GeistColors.surface,
+    maxHeight: '85%',
+  },
+  modalContentMobile: {
     padding: GeistSpacing.lg,
-    maxHeight: '80%',
+    borderRadius: GeistBorderRadius.md,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -406,27 +465,21 @@ const styles = StyleSheet.create({
     marginBottom: GeistSpacing.lg,
   },
   modalTitle: {
-    fontSize: GeistFontSizes.xl,
-    fontWeight: '600',
+    ...GeistTypography.headline,
     color: GeistColors.foreground,
+  },
+  modalForm: {
+    gap: GeistSpacing.md,
   },
   inputLabel: {
-    fontSize: GeistFontSizes.xs,
-    fontWeight: '500',
-    color: GeistColors.gray600,
+    ...GeistTypography.caption,
+    color: GeistColors.gray700,
     marginBottom: GeistSpacing.xs,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
   input: {
-    borderWidth: 1,
-    borderColor: GeistColors.border,
-    borderRadius: GeistBorderRadius.sm,
-    padding: GeistSpacing.sm,
-    fontSize: GeistFontSizes.sm,
+    ...GeistComponents.input,
     marginBottom: GeistSpacing.md,
     color: GeistColors.foreground,
-    backgroundColor: GeistColors.background,
   },
   textArea: {
     height: 100,
@@ -434,38 +487,28 @@ const styles = StyleSheet.create({
   },
   modalButtons: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'flex-end',
-    marginTop: GeistSpacing.sm,
+    marginTop: GeistSpacing.md,
     gap: GeistSpacing.sm,
   },
   button: {
-    paddingHorizontal: GeistSpacing.md,
-    paddingVertical: GeistSpacing.md,
-    borderRadius: GeistBorderRadius.sm,
-    minHeight: 44,
-    justifyContent: 'center',
+    ...GeistComponents.button.outline,
+    minHeight: 48,
   },
   cancelButton: {
-    backgroundColor: GeistColors.background,
-    borderWidth: 1,
-    borderColor: GeistColors.border,
+    backgroundColor: GeistColors.surface,
   },
   cancelButtonText: {
-    color: GeistColors.gray600,
-    fontSize: GeistFontSizes.sm,
-    fontWeight: '500',
-    includeFontPadding: false,
-    textAlignVertical: 'center',
+    ...GeistTypography.button,
+    color: GeistColors.gray700,
   },
   saveButton: {
-    backgroundColor: GeistColors.foreground,
+    ...GeistComponents.button.primary,
   },
   saveButtonText: {
-    color: GeistColors.background,
-    fontSize: GeistFontSizes.sm,
-    fontWeight: '500',
-    includeFontPadding: false,
-    textAlignVertical: 'center',
+    ...GeistTypography.button,
+    color: GeistColors.foreground,
   },
 });
 

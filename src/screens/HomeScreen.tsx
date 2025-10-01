@@ -8,6 +8,7 @@ import {
   TextInput,
   Alert,
   Pressable,
+  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -16,7 +17,17 @@ import { RootStackParamList } from '../types/navigation';
 import { useStore } from '../store/useStore';
 import { Deck } from '../types';
 import { DEFAULT_DECK_SETTINGS } from '../types';
-import { GeistColors, GeistSpacing, GeistFontSizes, GeistBorderRadius, GeistShadows } from '../theme/geist';
+import {
+  GeistColors,
+  GeistSpacing,
+  GeistFontSizes,
+  GeistBorderRadius,
+  GeistShadows,
+  GeistFontWeights,
+  GeistBorders,
+  GeistComponents,
+  GeistTypography,
+} from '../theme/geist';
 import { useResponsive, useGridColumns } from '../hooks/useResponsive';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -30,6 +41,7 @@ const HomeScreen = () => {
   const [newDeckDescription, setNewDeckDescription] = useState('');
   
   const { isTablet, width } = useResponsive();
+  const isMobile = !isTablet;
   const numColumns = useGridColumns(1);
 
   useEffect(() => {
@@ -100,7 +112,7 @@ const HomeScreen = () => {
 
     return (
       <TouchableOpacity
-        style={styles.deckCard}
+        style={[styles.deckCard, isMobile && styles.deckCardMobile]}
         onPress={() => navigation.navigate('DeckDetail', { deckId: item.id })}
       >
         <View style={styles.deckHeader}>
@@ -116,7 +128,7 @@ const HomeScreen = () => {
             onPress={() => handleDeleteDeck(item)}
             style={styles.deleteButton}
           >
-            <Ionicons name="trash-outline" size={16} color={GeistColors.gray500} />
+            <Ionicons name="trash-outline" size={16} color={GeistColors.foreground} />
           </TouchableOpacity>
         </View>
 
@@ -143,13 +155,13 @@ const HomeScreen = () => {
           </View>
         ) : dueCards > 0 ? (
           <TouchableOpacity
-            style={styles.studyButton}
+            style={[styles.studyButton, isMobile && styles.studyButtonMobile]}
             onPress={() => navigation.navigate('Study', { deckId: item.id })}
           >
             <Text style={styles.studyButtonText}>
               Study Now {stats?.dueCards ? `(${stats.dueCards} ${stats.dueCards === 1 ? 'card' : 'cards'})` : ''}
             </Text>
-            <Ionicons name="arrow-forward" size={16} color={GeistColors.background} />
+            <Ionicons name="arrow-forward" size={16} color={GeistColors.foreground} />
           </TouchableOpacity>
         ) : (
           <View style={styles.allDonePrompt}>
@@ -187,29 +199,47 @@ const HomeScreen = () => {
     return { totalStudied, totalDue };
   }, [decks, deckStats]);
 
+  const quickStatsContent = (
+    <>
+      <View style={styles.quickStatItem}>
+        <Ionicons name="checkmark-circle" size={20} color={GeistColors.foreground} />
+        <Text style={styles.quickStatText}>
+          {todayStats.totalStudied} studied today
+        </Text>
+      </View>
+      <View style={styles.quickStatItem}>
+        <Ionicons name="time" size={20} color={GeistColors.accent} />
+        <Text style={styles.quickStatText}>
+          {todayStats.totalDue} due now
+        </Text>
+      </View>
+    </>
+  );
+
   return (
     <View style={styles.container}>
       {/* Quick Stats Banner */}
       {decks.length > 0 && (
-        <View style={styles.quickStats}>
-          <View style={styles.quickStatItem}>
-            <Ionicons name="checkmark-circle" size={20} color={GeistColors.foreground} />
-            <Text style={styles.quickStatText}>
-              {todayStats.totalStudied} studied today
-            </Text>
-          </View>
-          <View style={styles.quickStatItem}>
-            <Ionicons name="time" size={20} color={GeistColors.accent} />
-            <Text style={styles.quickStatText}>
-              {todayStats.totalDue} due now
-            </Text>
-          </View>
+        <View style={styles.quickStatsWrapper}>
+          {isMobile ? (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.quickStatsMobile}
+            >
+              {quickStatsContent}
+            </ScrollView>
+          ) : (
+            <View style={styles.quickStats}>
+              {quickStatsContent}
+            </View>
+          )}
         </View>
       )}
 
       <View style={styles.header}>
         <View style={styles.searchBar}>
-          <Ionicons name="search" size={16} color={GeistColors.gray500} />
+          <Ionicons name="search" size={16} color={GeistColors.foreground} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search decks..."
@@ -269,7 +299,8 @@ const HomeScreen = () => {
         key={numColumns}
         contentContainerStyle={[
           styles.listContent,
-          isTablet && { maxWidth: 1200, alignSelf: 'center', width: '100%' }
+          isTablet && { maxWidth: 1200, alignSelf: 'center', width: '100%' },
+          isMobile && styles.listContentMobile,
         ]}
         ListEmptyComponent={
           <View style={styles.emptyState}>
@@ -282,12 +313,24 @@ const HomeScreen = () => {
         }
       />
 
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => setShowCreateModal(true)}
-      >
-        <Ionicons name="add" size={24} color={GeistColors.background} />
-      </TouchableOpacity>
+      {isMobile ? (
+        <View style={styles.mobileActionBar}>
+          <TouchableOpacity
+            style={styles.mobileActionButton}
+            onPress={() => setShowCreateModal(true)}
+          >
+            <Ionicons name="add-circle" size={24} color={GeistColors.foreground} />
+            <Text style={styles.mobileActionText}>New Deck</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => setShowCreateModal(true)}
+        >
+          <Ionicons name="add" size={32} color={GeistColors.foreground} />
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
@@ -295,131 +338,151 @@ const HomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: GeistColors.background,
+    backgroundColor: GeistColors.canvas,
+    paddingBottom: GeistSpacing.xxl,
   },
   quickStats: {
     flexDirection: 'row',
     justifyContent: 'space-around',
+    margin: GeistSpacing.md,
+    borderRadius: GeistBorderRadius.lg,
+    backgroundColor: GeistColors.pastelViolet,
+    borderWidth: GeistBorders.thick,
+    borderColor: GeistColors.border,
+    paddingVertical: GeistSpacing.md,
+    paddingHorizontal: GeistSpacing.lg,
+    ...GeistShadows.md,
+  },
+  quickStatsWrapper: {
+    marginHorizontal: GeistSpacing.md,
+  },
+  quickStatsMobile: {
+    gap: GeistSpacing.md,
     paddingVertical: GeistSpacing.md,
     paddingHorizontal: GeistSpacing.md,
-    backgroundColor: GeistColors.gray50,
-    borderBottomWidth: 1,
-    borderBottomColor: GeistColors.border,
   },
   quickStatItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: GeistSpacing.xs,
+    gap: GeistSpacing.sm,
+    ...GeistTypography.badge,
   },
   quickStatText: {
-    fontSize: GeistFontSizes.sm,
+    ...GeistTypography.subtitle,
     color: GeistColors.foreground,
-    fontWeight: '500',
   },
   header: {
-    backgroundColor: GeistColors.background,
-    paddingHorizontal: GeistSpacing.md,
-    paddingTop: GeistSpacing.md,
-    paddingBottom: GeistSpacing.sm,
-    borderBottomWidth: 1,
+    backgroundColor: GeistColors.surface,
+    paddingHorizontal: GeistSpacing.lg,
+    paddingTop: GeistSpacing.lg,
+    paddingBottom: GeistSpacing.md,
+    borderBottomWidth: GeistBorders.thick,
     borderBottomColor: GeistColors.border,
+    ...GeistShadows.sm,
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: GeistColors.gray50,
-    borderWidth: 1,
-    borderColor: GeistColors.border,
-    borderRadius: GeistBorderRadius.sm,
-    paddingHorizontal: GeistSpacing.sm,
-    height: 44,
+    ...GeistComponents.input,
+    backgroundColor: GeistColors.surface,
+    gap: GeistSpacing.sm,
   },
   searchInput: {
     flex: 1,
-    marginLeft: GeistSpacing.sm,
-    fontSize: GeistFontSizes.sm,
+    marginLeft: 0,
+    fontSize: GeistFontSizes.base,
     color: GeistColors.foreground,
     paddingVertical: 0,
     includeFontPadding: false,
   },
   listContent: {
-    padding: GeistSpacing.md,
+    padding: GeistSpacing.lg,
+    gap: GeistSpacing.md,
+  },
+  listContentMobile: {
+    paddingBottom: GeistSpacing.xl * 2,
   },
   deckCard: {
-    backgroundColor: GeistColors.background,
-    borderWidth: 1,
-    borderColor: GeistColors.border,
-    borderRadius: GeistBorderRadius.md,
-    padding: GeistSpacing.md,
-    marginBottom: GeistSpacing.sm,
+    ...GeistComponents.card.default,
+    backgroundColor: GeistColors.surface,
     flex: 1,
     marginHorizontal: GeistSpacing.xs,
+    gap: GeistSpacing.md,
+  },
+  deckCardMobile: {
+    padding: GeistSpacing.md,
   },
   deckHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: GeistSpacing.md,
+    gap: GeistSpacing.md,
   },
   deckInfo: {
     flex: 1,
+    gap: GeistSpacing.xs,
   },
   deckName: {
-    fontSize: GeistFontSizes.lg,
-    fontWeight: '600',
+    ...GeistTypography.title,
     color: GeistColors.foreground,
-    marginBottom: GeistSpacing.xs,
+    backgroundColor: GeistColors.surface,
+    paddingHorizontal: GeistSpacing.sm,
+    paddingVertical: 4,
+    borderWidth: GeistBorders.medium,
+    borderColor: GeistColors.border,
+    borderRadius: GeistBorderRadius.sm,
   },
   deckDescription: {
-    fontSize: GeistFontSizes.sm,
-    color: GeistColors.gray600,
-    lineHeight: 20,
+    ...GeistTypography.body,
+    color: GeistColors.gray800,
+    lineHeight: 22,
   },
   deleteButton: {
     padding: GeistSpacing.xs,
+    borderWidth: GeistBorders.medium,
+    borderColor: GeistColors.border,
+    borderRadius: GeistBorderRadius.sm,
+    backgroundColor: GeistColors.surface,
   },
   deckStats: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     paddingVertical: GeistSpacing.md,
-    borderTopWidth: 1,
+    borderTopWidth: GeistBorders.medium,
     borderTopColor: GeistColors.border,
     marginTop: GeistSpacing.sm,
+    gap: GeistSpacing.md,
   },
   statItem: {
     alignItems: 'center',
+    gap: GeistSpacing.xs,
   },
   statValue: {
-    fontSize: GeistFontSizes.xl,
-    fontWeight: '600',
+    fontSize: GeistFontSizes.xxl,
+    fontWeight: GeistFontWeights.black,
     color: GeistColors.foreground,
   },
   dueValue: {
-    color: GeistColors.accent,
+    color: GeistColors.coralDark,
   },
   statLabel: {
-    fontSize: GeistFontSizes.xs,
-    color: GeistColors.gray500,
-    marginTop: GeistSpacing.xs,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    ...GeistTypography.caption,
+    color: GeistColors.gray600,
   },
   studyButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: GeistColors.foreground,
-    borderRadius: GeistBorderRadius.sm,
-    paddingVertical: GeistSpacing.md,
+    ...GeistComponents.button.primary,
     marginTop: GeistSpacing.md,
-    minHeight: 44,
+    gap: GeistSpacing.xs,
+  },
+  studyButtonMobile: {
+    width: '100%',
   },
   studyButtonText: {
-    color: GeistColors.background,
-    fontSize: GeistFontSizes.sm,
-    fontWeight: '500',
-    marginRight: GeistSpacing.xs,
-    includeFontPadding: false,
-    textAlignVertical: 'center',
+    ...GeistTypography.button,
+    color: GeistColors.foreground,
   },
   emptyDeckPrompt: {
     flexDirection: 'row',
@@ -427,10 +490,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: GeistSpacing.md,
     gap: GeistSpacing.xs,
+    backgroundColor: GeistColors.pastelAmber,
+    borderWidth: GeistBorders.medium,
+    borderColor: GeistColors.border,
+    borderRadius: GeistBorderRadius.sm,
   },
   emptyDeckText: {
-    fontSize: GeistFontSizes.sm,
-    color: GeistColors.gray500,
+    ...GeistTypography.body,
+    color: GeistColors.gray700,
   },
   allDonePrompt: {
     flexDirection: 'row',
@@ -438,64 +505,72 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: GeistSpacing.md,
     gap: GeistSpacing.xs,
+    backgroundColor: GeistColors.pastelTeal,
+    borderWidth: GeistBorders.medium,
+    borderColor: GeistColors.border,
+    borderRadius: GeistBorderRadius.sm,
+    ...GeistShadows.sm,
   },
   allDoneText: {
-    fontSize: GeistFontSizes.sm,
+    ...GeistTypography.button,
     color: GeistColors.foreground,
-    fontWeight: '500',
   },
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: GeistSpacing.xxxl,
+    gap: GeistSpacing.md,
   },
   emptyText: {
-    fontSize: GeistFontSizes.lg,
-    fontWeight: '500',
-    color: GeistColors.gray400,
-    marginTop: GeistSpacing.md,
+    ...GeistTypography.title,
+    color: GeistColors.foreground,
   },
   emptySubtext: {
-    fontSize: GeistFontSizes.sm,
-    color: GeistColors.gray400,
-    marginTop: GeistSpacing.xs,
+    ...GeistTypography.body,
+    color: GeistColors.gray600,
   },
   fab: {
     position: 'absolute',
     right: GeistSpacing.lg,
     bottom: GeistSpacing.lg,
-    width: 56,
-    height: 56,
-    borderRadius: GeistBorderRadius.sm,
-    backgroundColor: GeistColors.foreground,
+    ...GeistComponents.fab,
+  },
+  mobileActionBar: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: GeistSpacing.lg,
+    paddingTop: GeistSpacing.md,
+    paddingBottom: GeistSpacing.lg,
+    backgroundColor: GeistColors.canvas,
+    borderTopWidth: GeistBorders.thick,
+    borderTopColor: GeistColors.border,
+    ...GeistShadows.sm,
+  },
+  mobileActionButton: {
+    ...GeistComponents.button.primary,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    ...GeistShadows.md,
+    gap: GeistSpacing.sm,
+  },
+  mobileActionText: {
+    ...GeistTypography.button,
+    color: GeistColors.foreground,
   },
   createModal: {
-    backgroundColor: GeistColors.background,
-    margin: GeistSpacing.md,
-    padding: GeistSpacing.lg,
-    borderWidth: 1,
-    borderColor: GeistColors.border,
-    borderRadius: GeistBorderRadius.md,
-    ...GeistShadows.lg,
+    ...GeistComponents.card.spacious,
+    margin: GeistSpacing.lg,
   },
   modalTitle: {
-    fontSize: GeistFontSizes.xl,
-    fontWeight: '600',
-    marginBottom: GeistSpacing.lg,
+    ...GeistTypography.headline,
     color: GeistColors.foreground,
   },
   input: {
-    borderWidth: 1,
-    borderColor: GeistColors.border,
-    borderRadius: GeistBorderRadius.sm,
-    padding: GeistSpacing.sm,
-    fontSize: GeistFontSizes.sm,
+    ...GeistComponents.input,
     marginBottom: GeistSpacing.md,
     color: GeistColors.foreground,
-    backgroundColor: GeistColors.background,
   },
   textArea: {
     height: 80,
@@ -508,33 +583,23 @@ const styles = StyleSheet.create({
     gap: GeistSpacing.sm,
   },
   button: {
-    paddingHorizontal: GeistSpacing.md,
-    paddingVertical: GeistSpacing.md,
-    borderRadius: GeistBorderRadius.sm,
+    ...GeistComponents.button.outline,
     minHeight: 44,
     justifyContent: 'center',
   },
   cancelButton: {
-    backgroundColor: GeistColors.background,
-    borderWidth: 1,
-    borderColor: GeistColors.border,
+    backgroundColor: GeistColors.surface,
   },
   cancelButtonText: {
-    color: GeistColors.gray600,
-    fontSize: GeistFontSizes.sm,
-    fontWeight: '500',
-    includeFontPadding: false,
-    textAlignVertical: 'center',
+    ...GeistTypography.button,
+    color: GeistColors.gray700,
   },
   createButton: {
-    backgroundColor: GeistColors.foreground,
+    ...GeistComponents.button.primary,
   },
   createButtonText: {
-    color: GeistColors.background,
-    fontSize: GeistFontSizes.sm,
-    fontWeight: '500',
-    includeFontPadding: false,
-    textAlignVertical: 'center',
+    ...GeistTypography.button,
+    color: GeistColors.foreground,
   },
 });
 
