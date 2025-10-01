@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "REACTNATIVE_FLASHCARDS",
+    "name": "FlashCards Pro",
     "slug": "REACTNATIVE_FLASHCARDS",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -16,15 +16,23 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.flashcardspro.app",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": []
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "969cf4cc-5766-4e7b-b132-f9902680818e"
+      }
     }
   }
 }

@@ -1,20 +1,24 @@
+import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { Platform } from 'react-native';
+import AppNavigator from './src/navigation/AppNavigator';
 
 export default function App() {
+  useEffect(() => {
+    // Initialize database on app start (only for native platforms)
+    if (Platform.OS !== 'web') {
+      const { getDatabase } = require('./src/database/db');
+      getDatabase().catch((error: Error) => {
+        console.error('Failed to initialize database:', error);
+      });
+    }
+  }, []);
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
+    <SafeAreaProvider>
+      <AppNavigator />
       <StatusBar style="auto" />
-    </View>
+    </SafeAreaProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
