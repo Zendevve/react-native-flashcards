@@ -24,6 +24,7 @@ import {
   GeistFontWeights,
   GeistBorders,
   GeistComponents,
+  GeistTypography,
 } from '../theme/geist';
 import { speak, stopSpeaking } from '../utils/textToSpeech';
 import { useResponsive, useContentWidth } from '../hooks/useResponsive';
@@ -283,24 +284,25 @@ const StudyScreen = () => {
     );
   }
 
-  const progress = ((currentCardIndex + 1) / studyCards.length) * 100;
+  const totalCards = studyCards.length;
+  const currentPosition = currentCardIndex + 1;
+  const progress = totalCards > 0 ? (currentPosition / totalCards) * 100 : 0;
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerButton}>
           <Ionicons name="arrow-back" size={24} color={GeistColors.foreground} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>{currentDeck?.name || 'Study'}</Text>
-          {timeLeft !== null && timeLeft >= 0 && (
-            <Text style={[styles.timerText, timeLeft <= 5 && styles.timerWarning]}>
-              ⏱️ {timeLeft}s
-            </Text>
-          )}
-          {currentCardIndex === studyCards.length - 1 && studyCards.length > 1 && (
-            <Text style={styles.lastCardBadge}>🎉 Last card!</Text>
-          )}
+          <View style={styles.progressBar}>
+            <View style={[styles.progressFill, { width: `${progress}%` }]} />
+          </View>
+          <Text style={styles.progressText}>
+            Card {currentPosition} of {totalCards}
+            {timeLeft !== null && timeLeft >= 0 && ` • ${timeLeft}s`}
+          </Text>
         </View>
         <TouchableOpacity 
           onPress={() => navigation.navigate('DeckSettings', { deckId })}
@@ -326,28 +328,32 @@ const StudyScreen = () => {
               },
             ]}
           >
-            <Text style={styles.cardLabel}>Question</Text>
-            <TouchableOpacity 
-              style={styles.speakerButton}
-              onPress={handleSpeakFront}
-            >
-              <Ionicons 
-                name={isSpeakingFront ? "volume-high" : "volume-medium-outline"} 
-                size={24} 
-                color={GeistColors.gray500} 
-              />
-            </TouchableOpacity>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardLabel}>❓ Question</Text>
+              <TouchableOpacity 
+                style={styles.speakerButton}
+                onPress={handleSpeakFront}
+                activeOpacity={0.7}
+              >
+                <Ionicons 
+                  name={isSpeakingFront ? "volume-high" : "volume-medium-outline"} 
+                  size={20} 
+                  color={GeistColors.foreground} 
+                />
+              </TouchableOpacity>
+            </View>
             <ScrollView 
               style={styles.cardTextContainer}
               contentContainerStyle={styles.cardTextContent}
-              showsVerticalScrollIndicator={true}
+              showsVerticalScrollIndicator={false}
               bounces={true}
             >
               <Text style={styles.cardText}>{cardContent.front}</Text>
             </ScrollView>
             <View style={styles.tapHint}>
-              <Ionicons name="hand-left-outline" size={16} color={GeistColors.foreground} />
-              <Text style={styles.tapHintText}>Tap to reveal answer</Text>
+              <Ionicons name="hand-left-outline" size={18} color={GeistColors.foreground} />
+              <Text style={styles.tapHintText}>Tap card to flip</Text>
+              <Ionicons name="hand-right-outline" size={18} color={GeistColors.foreground} />
             </View>
           </Animated.View>
 
@@ -361,21 +367,24 @@ const StudyScreen = () => {
               },
             ]}
           >
-            <Text style={styles.cardLabel}>Answer</Text>
-            <TouchableOpacity 
-              style={styles.speakerButton}
-              onPress={handleSpeakBack}
-            >
-              <Ionicons 
-                name={isSpeakingBack ? "volume-high" : "volume-medium-outline"} 
-                size={24} 
-                color={GeistColors.gray500} 
-              />
-            </TouchableOpacity>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardLabel}>✅ Answer</Text>
+              <TouchableOpacity 
+                style={styles.speakerButton}
+                onPress={handleSpeakBack}
+                activeOpacity={0.7}
+              >
+                <Ionicons 
+                  name={isSpeakingBack ? "volume-high" : "volume-medium-outline"} 
+                  size={20} 
+                  color={GeistColors.foreground} 
+                />
+              </TouchableOpacity>
+            </View>
             <ScrollView 
               style={styles.cardTextContainer}
               contentContainerStyle={styles.cardTextContent}
-              showsVerticalScrollIndicator={true}
+              showsVerticalScrollIndicator={false}
               bounces={true}
             >
               <Text style={styles.cardText}>{cardContent.back}</Text>
@@ -386,31 +395,38 @@ const StudyScreen = () => {
 
       {isFlipped && (
         <View style={styles.ratingContainer}>
-          {currentCardIndex > 0 && (
-            <TouchableOpacity 
-              style={styles.previousButton}
-              onPress={() => {
-                setIsFlipped(false);
-                previousCard();
-              }}
-            >
-              <Ionicons name="arrow-back" size={16} color={GeistColors.gray600} />
-              <Text style={styles.previousButtonText}>Previous</Text>
-            </TouchableOpacity>
-          )}
-          <Text style={styles.ratingTitle}>How well did you know this?</Text>
+          <View style={styles.ratingHeader}>
+            {currentCardIndex > 0 && (
+              <TouchableOpacity 
+                style={styles.previousButton}
+                onPress={() => {
+                  setIsFlipped(false);
+                  previousCard();
+                }}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="arrow-back" size={18} color={GeistColors.foreground} />
+                <Text style={styles.previousButtonText}>Back</Text>
+              </TouchableOpacity>
+            )}
+            <Text style={styles.ratingTitle}>💭 How well did you know this?</Text>
+          </View>
           <View style={styles.ratingButtons}>
             <TouchableOpacity
               style={[styles.ratingButton, styles.ratingButtonAgain]}
               onPress={() => handleRating('again')}
+              activeOpacity={0.8}
             >
+              <Text style={styles.ratingEmoji}>😰</Text>
               <Text style={styles.ratingButtonText}>Again</Text>
               <Text style={styles.ratingSubtext}>{'<1d'}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.ratingButton, styles.ratingButtonHard]}
               onPress={() => handleRating('hard')}
+              activeOpacity={0.8}
             >
+              <Text style={styles.ratingEmoji}>😅</Text>
               <Text style={styles.ratingButtonText}>Hard</Text>
               <Text style={styles.ratingSubtext}>
                 {currentCard.interval < 1 ? '1d' : `${Math.round(currentCard.interval * 1.2)}d`}
@@ -419,7 +435,9 @@ const StudyScreen = () => {
             <TouchableOpacity
               style={[styles.ratingButton, styles.ratingButtonGood]}
               onPress={() => handleRating('good')}
+              activeOpacity={0.8}
             >
+              <Text style={styles.ratingEmoji}>😊</Text>
               <Text style={styles.ratingButtonText}>Good</Text>
               <Text style={styles.ratingSubtext}>
                 {currentCard.repetitions === 0
@@ -432,7 +450,9 @@ const StudyScreen = () => {
             <TouchableOpacity
               style={[styles.ratingButton, styles.ratingButtonEasy]}
               onPress={() => handleRating('easy')}
+              activeOpacity={0.8}
             >
+              <Text style={styles.ratingEmoji}>🎉</Text>
               <Text style={styles.ratingButtonText}>Easy</Text>
               <Text style={styles.ratingSubtext}>
                 {currentCard.repetitions === 0
@@ -488,39 +508,35 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   headerButton: {
-    padding: GeistSpacing.xs,
+    padding: GeistSpacing.sm,
     borderWidth: GeistBorders.medium,
     borderColor: GeistColors.border,
     borderRadius: GeistBorderRadius.sm,
     backgroundColor: GeistColors.surface,
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  timerText: {
-    fontSize: GeistFontSizes.sm,
-    color: GeistColors.foreground,
-    backgroundColor: GeistColors.violetLight,
-    paddingHorizontal: GeistSpacing.sm,
-    paddingVertical: 2,
+  progressBar: {
+    height: 6,
+    backgroundColor: GeistColors.gray200,
+    borderRadius: GeistBorderRadius.full,
     borderWidth: GeistBorders.medium,
     borderColor: GeistColors.border,
-    borderRadius: GeistBorderRadius.full,
+    overflow: 'hidden',
+    marginVertical: GeistSpacing.xs,
+    width: '100%',
   },
-  timerWarning: {
-    backgroundColor: GeistColors.coralLight,
-    color: GeistColors.foreground,
+  progressFill: {
+    height: '100%',
+    backgroundColor: GeistColors.violet,
   },
-  lastCardBadge: {
+  progressText: {
     fontSize: GeistFontSizes.xs,
-    color: GeistColors.foreground,
+    color: GeistColors.gray700,
     fontWeight: GeistFontWeights.bold,
-    marginTop: 2,
-    backgroundColor: GeistColors.limeLight,
-    paddingHorizontal: GeistSpacing.sm,
-    paddingVertical: 2,
-    borderWidth: GeistBorders.medium,
-    borderColor: GeistColors.border,
-    borderRadius: GeistBorderRadius.full,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
+    textAlign: 'center',
   },
   previousButton: {
     flexDirection: 'row',
@@ -528,41 +544,16 @@ const styles = StyleSheet.create({
     gap: GeistSpacing.xs,
     paddingVertical: GeistSpacing.sm,
     paddingHorizontal: GeistSpacing.md,
-    alignSelf: 'flex-start',
-    marginBottom: GeistSpacing.sm,
-    borderWidth: GeistBorders.medium,
+    borderWidth: GeistBorders.thick,
     borderColor: GeistColors.border,
-    borderRadius: GeistBorderRadius.sm,
-    backgroundColor: GeistColors.surface,
+    borderRadius: GeistBorderRadius.md,
+    backgroundColor: GeistColors.gray100,
+    minHeight: 44,
     ...GeistShadows.sm,
   },
   previousButtonText: {
-    fontSize: GeistFontSizes.sm,
-    color: GeistColors.gray600,
-    fontWeight: '500',
-  },
-  progressContainer: {
-    flex: 1,
-    marginHorizontal: GeistSpacing.md,
-  },
-  progressText: {
-    color: GeistColors.gray600,
-    fontSize: GeistFontSizes.xs,
-    textAlign: 'center',
-    marginBottom: GeistSpacing.xs,
-    fontWeight: '500',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  progressBar: {
-    height: GeistBorders.medium,
-    backgroundColor: GeistColors.gray200,
-    borderRadius: GeistBorderRadius.sm,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: GeistColors.accent,
+    ...GeistTypography.bodyStrong,
+    color: GeistColors.foreground,
   },
   cardContainer: {
     flex: 1,
@@ -592,30 +583,41 @@ const styles = StyleSheet.create({
   cardBack: {
     backgroundColor: GeistColors.pastelTeal,
   },
-  cardLabel: {
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    paddingHorizontal: GeistSpacing.lg,
+    paddingTop: GeistSpacing.lg,
     position: 'absolute',
-    top: GeistSpacing.lg,
-    fontSize: GeistFontSizes.xs,
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+  },
+  cardLabel: {
+    fontSize: GeistFontSizes.sm,
     color: GeistColors.foreground,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    fontWeight: GeistFontWeights.bold,
+    fontWeight: GeistFontWeights.extrabold,
     backgroundColor: GeistColors.surface,
-    paddingHorizontal: GeistSpacing.sm,
-    paddingVertical: 2,
+    paddingHorizontal: GeistSpacing.md,
+    paddingVertical: GeistSpacing.xs,
     borderWidth: GeistBorders.medium,
     borderColor: GeistColors.border,
     borderRadius: GeistBorderRadius.full,
+    ...GeistShadows.sm,
   },
   speakerButton: {
-    position: 'absolute',
-    top: GeistSpacing.lg,
-    right: GeistSpacing.lg,
     padding: GeistSpacing.sm,
     backgroundColor: GeistColors.surface,
     borderWidth: GeistBorders.medium,
     borderColor: GeistColors.border,
     borderRadius: GeistBorderRadius.sm,
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
     ...GeistShadows.sm,
   },
   cardTextContainer: {
@@ -642,22 +644,23 @@ const styles = StyleSheet.create({
   },
   tapHint: {
     position: 'absolute',
-    bottom: GeistSpacing.lg,
+    bottom: GeistSpacing.xl,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: GeistSpacing.xs,
+    gap: GeistSpacing.sm,
     backgroundColor: GeistColors.surface,
-    borderWidth: GeistBorders.medium,
+    borderWidth: GeistBorders.thick,
     borderColor: GeistColors.border,
     borderRadius: GeistBorderRadius.full,
-    paddingHorizontal: GeistSpacing.md,
-    paddingVertical: 6,
-    ...GeistShadows.sm,
+    paddingHorizontal: GeistSpacing.lg,
+    paddingVertical: GeistSpacing.sm,
+    ...GeistShadows.md,
   },
   tapHintText: {
     fontSize: GeistFontSizes.sm,
     color: GeistColors.foreground,
-    fontWeight: GeistFontWeights.medium,
+    fontWeight: GeistFontWeights.extrabold,
+    textTransform: 'uppercase',
   },
   hintContainer: {
     position: 'absolute',
@@ -693,18 +696,23 @@ const styles = StyleSheet.create({
     backgroundColor: GeistColors.surface,
     borderTopWidth: GeistBorders.thick,
     borderTopColor: GeistColors.border,
-    padding: GeistSpacing.xl,
-    paddingBottom: GeistSpacing.xxl,
+    padding: GeistSpacing.lg,
+    paddingBottom: GeistSpacing.xl,
+    gap: GeistSpacing.md,
     ...GeistShadows.md,
   },
+  ratingHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: GeistSpacing.md,
+    marginBottom: GeistSpacing.sm,
+  },
   ratingTitle: {
-    fontSize: GeistFontSizes.sm,
-    fontWeight: '500',
+    ...GeistTypography.bodyStrong,
     color: GeistColors.foreground,
+    flex: 1,
     textAlign: 'center',
-    marginBottom: GeistSpacing.md,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
   },
   ratingButtons: {
     flexDirection: 'row',
@@ -737,19 +745,24 @@ const styles = StyleSheet.create({
   ratingButtonEasy: {
     backgroundColor: GeistColors.limeLight,
   },
+  ratingEmoji: {
+    fontSize: 28,
+    marginBottom: GeistSpacing.xs,
+  },
   ratingButtonText: {
     color: GeistColors.foreground,
-    fontSize: GeistFontSizes.base,
+    fontSize: GeistFontSizes.sm,
     fontWeight: GeistFontWeights.extrabold,
     includeFontPadding: false,
     textAlignVertical: 'center',
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   ratingSubtext: {
     fontSize: GeistFontSizes.xs,
     color: GeistColors.gray700,
-    marginTop: 4,
-    fontWeight: GeistFontWeights.medium,
+    marginTop: GeistSpacing.xs,
+    fontWeight: GeistFontWeights.bold,
   },
   completionContainer: {
     flex: 1,
