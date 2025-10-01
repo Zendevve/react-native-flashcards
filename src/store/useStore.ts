@@ -248,10 +248,13 @@ export const useStore = create<AppState>((set, get) => ({
         deck.settings.newCardsPerDay
       );
 
-      // Combine and limit based on settings
+      // Combine and limit based on settings, ensuring no duplicates
+      const dueCardIds = new Set(dueCards.map(c => c.id));
+      const uniqueNewCards = newCards.filter(c => !dueCardIds.has(c.id));
+      
       let studyCards = [
         ...dueCards.slice(0, deck.settings.reviewCardsPerDay),
-        ...newCards,
+        ...uniqueNewCards,
       ];
 
       // Shuffle if enabled
