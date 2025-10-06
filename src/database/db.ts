@@ -1,10 +1,20 @@
-import * as SQLite from 'expo-sqlite';
+import { Platform } from 'react-native';
+
+// Only import SQLite on native platforms
+let SQLite: any = null;
+if (Platform.OS !== 'web') {
+  SQLite = require('expo-sqlite');
+}
 
 const DB_NAME = 'flashcards.db';
 
-let db: SQLite.SQLiteDatabase | null = null;
+let db: any = null;
 
-export const getDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
+export const getDatabase = async (): Promise<any> => {
+  if (Platform.OS === 'web') {
+    throw new Error('SQLite is not available on web. Use webStorage instead.');
+  }
+  
   if (db) return db;
   
   db = await SQLite.openDatabaseAsync(DB_NAME);
@@ -12,7 +22,7 @@ export const getDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
   return db;
 };
 
-const initializeDatabase = async (database: SQLite.SQLiteDatabase) => {
+const initializeDatabase = async (database: any) => {
   await database.execAsync(`
     PRAGMA journal_mode = WAL;
     PRAGMA foreign_keys = ON;

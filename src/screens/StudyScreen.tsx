@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,9 @@ import {
   Animated,
   Alert,
   ScrollView,
+  PanResponder,
+  Dimensions,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -28,6 +31,9 @@ import {
 } from '../theme/geist';
 import { speak, stopSpeaking } from '../utils/textToSpeech';
 import { useResponsive, useContentWidth } from '../hooks/useResponsive';
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.15; // 15% of screen width
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Study'>;
 type RouteProps = RouteProp<RootStackParamList, 'Study'>;
@@ -54,13 +60,17 @@ const StudyScreen = () => {
   } = useStore();
 
   const [isFlipped, setIsFlipped] = useState(false);
-  const [flipAnimation] = useState(new Animated.Value(0));
+  const flipAnimation = useRef(new Animated.Value(0)).current;
   const [isSpeakingFront, setIsSpeakingFront] = useState(false);
   const [isSpeakingBack, setIsSpeakingBack] = useState(false);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   
   const { isTablet, isSmallDevice } = useResponsive();
   const contentWidth = useContentWidth();
+
+  // Swipe gesture state
+  const swipePosition = useRef(new Animated.Value(0)).current;
+  const swipeOpacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     startStudySession(deckId);
@@ -70,6 +80,13 @@ const StudyScreen = () => {
       stopSpeaking();
     };
   }, [deckId]);
+
+  // Reset flip state when card changes
+  useEffect(() => {
+    console.log('📍 Card index changed to:', currentCardIndex);
+    setIsFlipped(false);
+    flipAnimation.setValue(0);
+  }, [currentCardIndex]);
 
   // Debug: Log study cards to verify count
   useEffect(() => {
@@ -211,6 +228,62 @@ const StudyScreen = () => {
     );
   };
 
+  // Pan responder for swipe gestures
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return Math.abs(gestureState.dx) > 5;
+      },
+      onPanResponderMove: (_, gestureState) => {
+        swipePosition.setValue(gestureState.dx);
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        const swipeDistance = gestureState.dx;
+        const velocity = gestureState.vx;
+        
+        // Determine if swipe should complete based on distance OR velocity
+        const shouldSwipeRight = (swipeDistance > SWIPE_THRESHOLD || velocity > 0.3) && currentCardIndex > 0;
+        const shouldSwipeLeft = (swipeDistance < -SWIPE_THRESHOLD || velocity < -0.3) && currentCardIndex < studyCards.length - 1;
+        
+        if (shouldSwipeRight) {
+          console.log('👉 Swiping to PREVIOUS card. Current index:', currentCardIndex);
+          // Complete swipe to previous card
+          previousCard();
+          
+          Animated.timing(swipePosition, {
+            toValue: SCREEN_WIDTH,
+            duration: 200,
+            useNativeDriver: true,
+          }).start(() => {
+            swipePosition.setValue(0);
+          });
+        } else if (shouldSwipeLeft) {
+          console.log('👈 Swiping to NEXT card. Current index:', currentCardIndex);
+          // Complete swipe to next card
+          nextCard();
+          
+          Animated.timing(swipePosition, {
+            toValue: -SCREEN_WIDTH,
+            duration: 200,
+            useNativeDriver: true,
+          }).start(() => {
+            swipePosition.setValue(0);
+          });
+        } else {
+          console.log('↩️ Spring back - swipe too short. Distance:', swipeDistance);
+          // Snap back to center
+          Animated.spring(swipePosition, {
+            toValue: 0,
+            tension: 50,
+            friction: 7,
+            useNativeDriver: true,
+          }).start();
+        }
+      },
+    })
+  ).current;
+
   const frontInterpolate = flipAnimation.interpolate({
     inputRange: [0, 180],
     outputRange: ['0deg', '180deg'],
@@ -326,21 +399,44 @@ const StudyScreen = () => {
       </View>
 
       <View style={[styles.cardContainer, isTablet && { maxWidth: contentWidth, alignSelf: 'center', width: '100%' }]}>
-        <TouchableOpacity
-          activeOpacity={1}
-          onPress={handleFlip}
-          style={[styles.card, isTablet && { maxWidth: 800 }, isSmallDevice && { width: '100%' }]}
-        >
-          <Animated.View
-            style={[
-              styles.cardFace,
-              styles.cardFront,
-              {
-                transform: [{ rotateY: frontInterpolate }],
-                opacity: frontOpacity,
-              },
-            ]}
+        {/* Render current and adjacent cards for smooth carousel */}
+        {[currentCardIndex - 1, currentCardIndex, currentCardIndex + 1].map((index) => {
+          if (index < 0 || index >= studyCards.length) return null;
+          
+          const card = studyCards[index];
+          const isCurrentCard = index === currentCardIndex;
+          const offset = (index - currentCardIndex) * SCREEN_WIDTH;
+          
+          return (
+            <Animated.View
+              key={`card-${index}`}
+              {...(isCurrentCard ? panResponder.panHandlers : {})}
+              style={[
+                styles.card,
+                isTablet && { maxWidth: 800 },
+                isSmallDevice && { width: '100%' },
+                {
+                  position: isCurrentCard ? 'relative' : 'absolute',
+                  transform: [{ translateX: Animated.add(swipePosition, offset) }],
+                  opacity: isCurrentCard ? 1 : 0.3,
+                },
+              ]}
+            >
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={handleFlip}
+            style={{ flex: 1 }}
           >
+            <Animated.View
+              style={[
+                styles.cardFace,
+                styles.cardFront,
+                {
+                  transform: [{ rotateY: frontInterpolate }],
+                  opacity: frontOpacity,
+                },
+              ]}
+            >
             <View style={styles.cardHeader}>
               <Text style={styles.cardLabel}>❓ Question</Text>
               <TouchableOpacity 
@@ -361,13 +457,15 @@ const StudyScreen = () => {
               showsVerticalScrollIndicator={false}
               bounces={true}
             >
-              <Text style={styles.cardText}>{cardContent.front}</Text>
+              <Text style={styles.cardText}>{card.front}</Text>
             </ScrollView>
-            <View style={styles.tapHint}>
-              <Ionicons name="hand-left-outline" size={18} color={GeistColors.foreground} />
-              <Text style={styles.tapHintText}>Tap card to flip</Text>
-              <Ionicons name="hand-right-outline" size={18} color={GeistColors.foreground} />
-            </View>
+            {isCurrentCard && (
+              <View style={styles.tapHint}>
+                <Ionicons name="hand-left-outline" size={18} color={GeistColors.foreground} />
+                <Text style={styles.tapHintText}>Tap to flip • Swipe to navigate</Text>
+                <Ionicons name="hand-right-outline" size={18} color={GeistColors.foreground} />
+              </View>
+            )}
           </Animated.View>
 
           <Animated.View
@@ -400,10 +498,39 @@ const StudyScreen = () => {
               showsVerticalScrollIndicator={false}
               bounces={true}
             >
-              <Text style={styles.cardText}>{cardContent.back}</Text>
+              <Text style={styles.cardText}>{card.back}</Text>
             </ScrollView>
           </Animated.View>
         </TouchableOpacity>
+      </Animated.View>
+          );
+        })}
+
+        {/* Navigation Arrows (clickable on web, visual indicators on mobile) */}
+        {currentCardIndex > 0 && (
+          <TouchableOpacity 
+            style={styles.swipeIndicatorLeft}
+            onPress={() => {
+              console.log('⬅️ Previous button clicked');
+              previousCard();
+            }}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="chevron-back" size={32} color={GeistColors.foreground} />
+          </TouchableOpacity>
+        )}
+        {currentCardIndex < studyCards.length - 1 && (
+          <TouchableOpacity 
+            style={styles.swipeIndicatorRight}
+            onPress={() => {
+              console.log('➡️ Next button clicked');
+              nextCard();
+            }}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="chevron-forward" size={32} color={GeistColors.foreground} />
+          </TouchableOpacity>
+        )}
       </View>
 
       {isFlipped && (
@@ -573,15 +700,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: GeistSpacing.xxl,
+    overflow: 'hidden',
   },
   card: {
     width: '100%',
     height: '70%',
-    maxHeight: 500,
-    ...GeistShadows.lg,
+    maxHeight: 600,
   },
   cardFace: {
-    ...GeistComponents.card,
     position: 'absolute',
     width: '100%',
     height: '100%',
@@ -589,12 +715,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backfaceVisibility: 'hidden',
+    borderRadius: GeistBorderRadius.xl,
+    borderWidth: GeistBorders.thick,
+    borderColor: GeistColors.border,
+    ...GeistShadows.xl,
   },
   cardFront: {
-    backgroundColor: GeistColors.pastelViolet,
+    backgroundColor: GeistColors.violet,
   },
   cardBack: {
-    backgroundColor: GeistColors.pastelTeal,
+    backgroundColor: GeistColors.teal,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -610,63 +740,64 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   cardLabel: {
-    fontSize: GeistFontSizes.sm,
+    fontSize: GeistFontSizes.base,
     color: GeistColors.foreground,
-    fontWeight: GeistFontWeights.extrabold,
+    fontWeight: GeistFontWeights.black,
     backgroundColor: GeistColors.surface,
-    paddingHorizontal: GeistSpacing.md,
-    paddingVertical: GeistSpacing.xs,
-    borderWidth: GeistBorders.medium,
+    paddingHorizontal: GeistSpacing.lg,
+    paddingVertical: GeistSpacing.sm,
+    borderWidth: GeistBorders.thick,
     borderColor: GeistColors.border,
     borderRadius: GeistBorderRadius.full,
-    ...GeistShadows.sm,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    ...GeistShadows.md,
   },
   speakerButton: {
-    padding: GeistSpacing.sm,
+    padding: GeistSpacing.md,
     backgroundColor: GeistColors.surface,
-    borderWidth: GeistBorders.medium,
+    borderWidth: GeistBorders.thick,
     borderColor: GeistColors.border,
-    borderRadius: GeistBorderRadius.sm,
-    minWidth: 44,
-    minHeight: 44,
+    borderRadius: GeistBorderRadius.md,
+    minWidth: 48,
+    minHeight: 48,
     alignItems: 'center',
     justifyContent: 'center',
-    ...GeistShadows.sm,
+    ...GeistShadows.md,
   },
   cardTextContainer: {
     flex: 1,
     width: '100%',
-    paddingHorizontal: GeistSpacing.lg,
-    marginTop: GeistSpacing.xl,
+    paddingHorizontal: GeistSpacing.xl,
+    marginTop: GeistSpacing.xxl,
     marginBottom: GeistSpacing.xxl,
   },
   cardTextContent: {
     flexGrow: 1,
-    justifyContent: 'flex-start',
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: GeistSpacing.md,
-    minHeight: 200,
   },
   cardText: {
     fontSize: GeistFontSizes.xxl,
+    fontWeight: GeistFontWeights.bold,
     color: GeistColors.foreground,
     textAlign: 'center',
-    lineHeight: 32,
-    fontWeight: GeistFontWeights.bold,
+    lineHeight: 40,
     flexShrink: 1,
+    letterSpacing: 0.5,
   },
   tapHint: {
-    position: 'absolute',
-    bottom: GeistSpacing.xl,
     flexDirection: 'row',
     alignItems: 'center',
     gap: GeistSpacing.sm,
+    position: 'absolute',
+    bottom: GeistSpacing.xl,
+    paddingHorizontal: GeistSpacing.lg,
+    paddingVertical: GeistSpacing.md,
     backgroundColor: GeistColors.surface,
     borderWidth: GeistBorders.thick,
     borderColor: GeistColors.border,
     borderRadius: GeistBorderRadius.full,
-    paddingHorizontal: GeistSpacing.lg,
-    paddingVertical: GeistSpacing.sm,
     ...GeistShadows.md,
   },
   tapHintText: {
@@ -674,29 +805,7 @@ const styles = StyleSheet.create({
     color: GeistColors.foreground,
     fontWeight: GeistFontWeights.extrabold,
     textTransform: 'uppercase',
-  },
-  hintContainer: {
-    position: 'absolute',
-    bottom: GeistSpacing.xxxl + 20,
-    alignSelf: 'center',
-    alignItems: 'center',
-  },
-  hintButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: GeistSpacing.xs,
-    paddingHorizontal: GeistSpacing.md,
-    paddingVertical: GeistSpacing.sm,
-    borderWidth: GeistBorders.medium,
-    borderColor: GeistColors.border,
-    borderRadius: GeistBorderRadius.sm,
-    backgroundColor: GeistColors.pastelAmber,
-    ...GeistShadows.sm,
-  },
-  hintButtonText: {
-    fontSize: GeistFontSizes.sm,
-    color: GeistColors.foreground,
-    fontWeight: GeistFontWeights.medium,
+    letterSpacing: 0.5,
   },
   hintText: {
     fontSize: GeistFontSizes.xl,
@@ -889,6 +998,32 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
     textAlignVertical: 'center',
     textTransform: 'uppercase',
+  },
+  swipeIndicatorLeft: {
+    position: 'absolute',
+    left: GeistSpacing.lg,
+    top: '50%',
+    transform: [{ translateY: -16 }],
+    backgroundColor: GeistColors.surface,
+    borderRadius: GeistBorderRadius.full,
+    borderWidth: GeistBorders.thick,
+    borderColor: GeistColors.border,
+    padding: GeistSpacing.sm,
+    ...GeistShadows.md,
+    ...(Platform.OS === 'web' && { cursor: 'pointer' as any }),
+  },
+  swipeIndicatorRight: {
+    position: 'absolute',
+    right: GeistSpacing.lg,
+    top: '50%',
+    transform: [{ translateY: -16 }],
+    backgroundColor: GeistColors.surface,
+    borderRadius: GeistBorderRadius.full,
+    borderWidth: GeistBorders.thick,
+    borderColor: GeistColors.border,
+    padding: GeistSpacing.sm,
+    ...GeistShadows.md,
+    ...(Platform.OS === 'web' && { cursor: 'pointer' as any }),
   },
 });
 

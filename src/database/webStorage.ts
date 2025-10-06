@@ -1,10 +1,12 @@
 import { Deck, Card, DeckSettings, DEFAULT_DECK_SETTINGS } from '../types';
+import { MOCK_DECKS, MOCK_CARDS } from './mockData';
 
 // Web storage using localStorage (for MVP, can be upgraded to IndexedDB later)
 
 const STORAGE_KEYS = {
   DECKS: 'flashcards_decks',
   CARDS: 'flashcards_cards',
+  INITIALIZED: 'flashcards_initialized',
 };
 
 // Helper functions
@@ -25,6 +27,27 @@ const saveToStorage = <T>(key: string, data: T[]): void => {
     console.error('Error saving to storage:', error);
   }
 };
+
+// Initialize storage with mock data on first run
+const initializeStorage = (): void => {
+  try {
+    const initialized = localStorage.getItem(STORAGE_KEYS.INITIALIZED);
+    if (!initialized) {
+      console.log('Initializing web storage with sample data...');
+      saveToStorage(STORAGE_KEYS.DECKS, MOCK_DECKS);
+      saveToStorage(STORAGE_KEYS.CARDS, MOCK_CARDS);
+      localStorage.setItem(STORAGE_KEYS.INITIALIZED, 'true');
+      console.log('Sample data loaded successfully!');
+    }
+  } catch (error) {
+    console.error('Error initializing storage:', error);
+  }
+};
+
+// Initialize on module load
+if (typeof window !== 'undefined' && window.localStorage) {
+  initializeStorage();
+}
 
 // Deck operations
 export const webDeckStorage = {

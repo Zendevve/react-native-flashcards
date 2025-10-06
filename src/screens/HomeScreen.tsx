@@ -9,6 +9,7 @@ import {
   Alert,
   Pressable,
   ScrollView,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -28,7 +29,7 @@ import {
   GeistComponents,
   GeistTypography,
 } from '../theme/geist';
-import { useResponsive, useGridColumns } from '../hooks/useResponsive';
+import { useResponsive, useGridColumns, useContentWidth } from '../hooks/useResponsive';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -40,14 +41,17 @@ const HomeScreen = () => {
   const [newDeckName, setNewDeckName] = useState('');
   const [newDeckDescription, setNewDeckDescription] = useState('');
   
-  const { isTablet, width } = useResponsive();
+  const { isTablet, width, height, orientation } = useResponsive();
   const isMobile = !isTablet;
-  const numColumns = useGridColumns(1);
+  const isLandscape = orientation === 'landscape';
+  const gridColumns = useGridColumns(1);
+  const numColumns = isLandscape && !isTablet ? 2 : gridColumns;
+  const contentWidth = useContentWidth();
+  const isWeb = Platform.OS === 'web';
 
   useEffect(() => {
     loadDecks();
   }, []);
-
   useEffect(() => {
     // Load stats for all decks
     decks.forEach((deck) => {
@@ -109,67 +113,98 @@ const HomeScreen = () => {
   const renderDeckItem = ({ item }: { item: Deck }) => {
     const stats = deckStats[item.id];
     const dueCards = stats?.dueCards || 0;
+    const totalCards = stats?.totalCards || 0;
+    const hasCards = totalCards > 0;
+    const hasDue = dueCards > 0;
 
     return (
-      <TouchableOpacity
-        style={[styles.deckCard, isMobile && styles.deckCardMobile]}
-        onPress={() => navigation.navigate('DeckDetail', { deckId: item.id })}
-      >
-        <View style={styles.deckHeader}>
+      <View style={[
+        styles.deckCard,
+        isMobile && styles.deckCardMobile,
+        isLandscape && styles.deckCardLandscape
+      ]}>
+        {/* Header with name and actions */}
+        <TouchableOpacity 
+          style={styles.deckHeader}
+          onPress={() => navigation.navigate('DeckDetail', { deckId: item.id })}
+          activeOpacity={0.8}
+        >
           <View style={styles.deckInfo}>
-            <Text style={styles.deckName}>{item.name}</Text>
+            <Text style={styles.deckName} numberOfLines={1}>{item.name}</Text>
             {item.description ? (
               <Text style={styles.deckDescription} numberOfLines={2}>
                 {item.description}
               </Text>
             ) : null}
           </View>
-          <TouchableOpacity
-            onPress={() => handleDeleteDeck(item)}
-            style={styles.deleteButton}
-          >
-            <Ionicons name="trash-outline" size={16} color={GeistColors.foreground} />
-          </TouchableOpacity>
-        </View>
+          <View style={styles.deckActions}>
+            <TouchableOpacity
+              onPress={(e) => {
+                e.stopPropagation();
+                navigation.navigate('CardList', { deckId: item.id });
+              }}
+              style={styles.iconButton}
+            >
+              <Ionicons name="list-outline" size={18} color={GeistColors.foreground} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={(e) => {
+                e.stopPropagation();
+                handleDeleteDeck(item);
+              }}
+              style={styles.iconButton}
+            >
+              <Ionicons name="trash-outline" size={18} color={GeistColors.foreground} />
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
 
+        {/* Stats row */}
         <View style={styles.deckStats}>
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>{stats?.totalCards || 0}</Text>
-            <Text style={styles.statLabel}>Total</Text>
+          <View style={styles.statChip}>
+            <Ionicons name="albums-outline" size={14} color={GeistColors.gray600} />
+            <Text style={styles.statChipText}>{totalCards} total</Text>
           </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>{stats?.newCards || 0}</Text>
-            <Text style={styles.statLabel}>New</Text>
+          <View style={styles.statChip}>
+            <Ionicons name="sparkles-outline" size={14} color={GeistColors.gray600} />
+            <Text style={styles.statChipText}>{stats?.newCards || 0} new</Text>
           </View>
-          <View style={styles.statItem}>
-            <Text style={[styles.statValue, dueCards > 0 && styles.dueValue]}>
-              {dueCards}
-            </Text>
-          </View>
+          {hasDue && (
+            <View style={[styles.statChip, styles.statChipDue]}>
+              <Ionicons name="time" size={14} color={GeistColors.foreground} />
+              <Text style={[styles.statChipText, styles.statChipDueText]}>{dueCards} due</Text>
+            </View>
+          )}
         </View>
 
-        {stats?.totalCards === 0 ? (
-          <View style={styles.emptyDeckPrompt}>
-            <Ionicons name="add-circle-outline" size={20} color={GeistColors.gray400} />
-            <Text style={styles.emptyDeckText}>Add cards to start studying</Text>
-          </View>
-        ) : dueCards > 0 ? (
+        {/* Primary action */}
+        {!hasCards ? (
           <TouchableOpacity
-            style={[styles.studyButton, isMobile && styles.studyButtonMobile]}
-            onPress={() => navigation.navigate('Study', { deckId: item.id })}
+            style={styles.emptyDeckButton}
+            onPress={() => navigation.navigate('CardList', { deckId: item.id })}
           >
-            <Text style={styles.studyButtonText}>
-              Study Now {stats?.dueCards ? `(${stats.dueCards} ${stats.dueCards === 1 ? 'card' : 'cards'})` : ''}
+            <Ionicons name="add-circle" size={20} color={GeistColors.foreground} />
+            <Text style={styles.emptyDeckButtonText}>Add Cards</Text>
+          </TouchableOpacity>
+        ) : hasDue ? (
+          <TouchableOpacity
+            style={styles.studyButtonPrimary}
+            onPress={() => navigation.navigate('Study', { deckId: item.id })}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="play-circle" size={24} color={GeistColors.foreground} />
+            <Text style={styles.studyButtonPrimaryText}>
+              Study Now • {dueCards} {dueCards === 1 ? 'card' : 'cards'}
             </Text>
-            <Ionicons name="arrow-forward" size={16} color={GeistColors.foreground} />
+            <Ionicons name="arrow-forward" size={20} color={GeistColors.foreground} />
           </TouchableOpacity>
         ) : (
-          <View style={styles.allDonePrompt}>
-            <Ionicons name="checkmark-circle" size={20} color={GeistColors.foreground} />
-            <Text style={styles.allDoneText}>✓ All caught up!</Text>
+          <View style={styles.allDoneCard}>
+            <Ionicons name="checkmark-circle" size={24} color={GeistColors.foreground} />
+            <Text style={styles.allDoneCardText}>All caught up! 🎉</Text>
           </View>
         )}
-      </TouchableOpacity>
+      </View>
     );
   };
 
@@ -216,12 +251,39 @@ const HomeScreen = () => {
     </>
   );
 
+  const greeting = React.useMemo(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return '☀️ Good morning';
+    if (hour < 18) return '👋 Good afternoon';
+    return '🌙 Good evening';
+  }, []);
+
   return (
     <View style={styles.container}>
+      {/* Welcome Header */}
+      <View style={[
+        styles.welcomeHeader,
+        isLandscape && styles.welcomeHeaderLandscape,
+        isWeb && width > 1200 && { maxWidth: contentWidth, alignSelf: 'center', width: '100%' }
+      ]}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.greeting}>{greeting}</Text>
+          <Text style={styles.welcomeSubtext}>Ready to learn?</Text>
+        </View>
+        {todayStats.totalDue > 0 && (
+          <View style={styles.dueBadge}>
+            <Text style={styles.dueBadgeText}>{todayStats.totalDue} due</Text>
+          </View>
+        )}
+      </View>
+
       {/* Quick Stats Banner */}
       {decks.length > 0 && (
-        <View style={styles.quickStatsWrapper}>
-          {isMobile ? (
+        <View style={[
+          styles.quickStatsWrapper,
+          isLandscape && styles.quickStatsWrapperLandscape
+        ]}>
+          {isMobile && !isLandscape ? (
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -239,7 +301,7 @@ const HomeScreen = () => {
 
       <View style={styles.header}>
         <View style={styles.searchBar}>
-          <Ionicons name="search" size={16} color={GeistColors.foreground} />
+          <Ionicons name="search" size={20} color={GeistColors.foreground} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search decks..."
@@ -304,11 +366,21 @@ const HomeScreen = () => {
         ]}
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Ionicons name="albums-outline" size={64} color={GeistColors.gray300} />
-            <Text style={styles.emptyText}>No decks yet</Text>
+            <View style={styles.emptyIconContainer}>
+              <Ionicons name="library-outline" size={56} color={GeistColors.foreground} />
+            </View>
+            <Text style={styles.emptyText}>Welcome to FlashCards Pro!</Text>
             <Text style={styles.emptySubtext}>
-              Create your first deck to get started
+              Create your first deck to start learning{'\n'}
+              Tap the button below to begin
             </Text>
+            <TouchableOpacity
+              style={styles.emptyStateButton}
+              onPress={() => setShowCreateModal(true)}
+            >
+              <Ionicons name="add-circle" size={20} color={GeistColors.foreground} />
+              <Text style={styles.emptyStateButtonText}>Create Your First Deck</Text>
+            </TouchableOpacity>
           </View>
         }
       />
@@ -341,6 +413,47 @@ const styles = StyleSheet.create({
     backgroundColor: GeistColors.canvas,
     paddingBottom: GeistSpacing.xxl,
   },
+  welcomeHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: GeistSpacing.lg,
+    paddingTop: GeistSpacing.lg,
+    paddingBottom: GeistSpacing.md,
+  },
+  welcomeHeaderLandscape: {
+    paddingTop: GeistSpacing.md,
+    paddingBottom: GeistSpacing.sm,
+  },
+  greeting: {
+    ...GeistTypography.headline,
+    color: GeistColors.foreground,
+    marginBottom: GeistSpacing.xs,
+  },
+  welcomeSubtext: {
+    ...GeistTypography.body,
+    color: GeistColors.gray600,
+  },
+  dueBadge: {
+    backgroundColor: GeistColors.coralLight,
+    borderWidth: GeistBorders.thick,
+    borderColor: GeistColors.border,
+    borderRadius: GeistBorderRadius.full,
+    paddingHorizontal: GeistSpacing.md,
+    paddingVertical: GeistSpacing.sm,
+    ...GeistShadows.sm,
+  },
+  dueBadgeText: {
+    ...GeistTypography.bodyStrong,
+    color: GeistColors.foreground,
+    textTransform: 'uppercase',
+  },
+  quickStatsWrapper: {
+    marginBottom: GeistSpacing.md,
+  },
+  quickStatsWrapperLandscape: {
+    marginBottom: GeistSpacing.sm,
+  },
   quickStats: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -351,10 +464,7 @@ const styles = StyleSheet.create({
     borderColor: GeistColors.border,
     paddingVertical: GeistSpacing.md,
     paddingHorizontal: GeistSpacing.lg,
-    ...GeistShadows.md,
-  },
-  quickStatsWrapper: {
-    marginHorizontal: GeistSpacing.md,
+    ...GeistShadows.sm,
   },
   quickStatsMobile: {
     gap: GeistSpacing.md,
@@ -412,10 +522,15 @@ const styles = StyleSheet.create({
   deckCardMobile: {
     padding: GeistSpacing.md,
   },
+  deckCardLandscape: {
+    padding: GeistSpacing.sm,
+    gap: GeistSpacing.sm,
+  },
   deckHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: GeistSpacing.md,
+    alignItems: 'flex-start',
+    marginBottom: GeistSpacing.sm,
     gap: GeistSpacing.md,
   },
   deckInfo: {
@@ -423,57 +538,59 @@ const styles = StyleSheet.create({
     gap: GeistSpacing.xs,
   },
   deckName: {
-    ...GeistTypography.title,
+    ...GeistTypography.bodyStrong,
+    fontSize: GeistFontSizes.lg,
     color: GeistColors.foreground,
-    backgroundColor: GeistColors.surface,
-    paddingHorizontal: GeistSpacing.sm,
-    paddingVertical: 4,
-    borderWidth: GeistBorders.medium,
-    borderColor: GeistColors.border,
-    borderRadius: GeistBorderRadius.sm,
-    flexShrink: 1,
-    flexWrap: 'wrap',
   },
   deckDescription: {
     ...GeistTypography.body,
-    color: GeistColors.gray800,
-    lineHeight: 22,
+    fontSize: GeistFontSizes.sm,
+    color: GeistColors.gray600,
+    lineHeight: 20,
   },
-  deleteButton: {
+  deckActions: {
+    flexDirection: 'row',
+    gap: GeistSpacing.xs,
+  },
+  iconButton: {
     padding: GeistSpacing.sm,
     borderWidth: GeistBorders.medium,
     borderColor: GeistColors.border,
     borderRadius: GeistBorderRadius.sm,
     backgroundColor: GeistColors.surface,
-    minWidth: 44,
-    minHeight: 44,
+    minWidth: 40,
+    minHeight: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
   deckStats: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: GeistSpacing.md,
-    borderTopWidth: GeistBorders.medium,
-    borderTopColor: GeistColors.border,
-    marginTop: GeistSpacing.sm,
-    gap: GeistSpacing.md,
+    flexWrap: 'wrap',
+    gap: GeistSpacing.xs,
+    marginBottom: GeistSpacing.md,
   },
-  statItem: {
+  statChip: {
+    flexDirection: 'row',
     alignItems: 'center',
     gap: GeistSpacing.xs,
+    paddingHorizontal: GeistSpacing.sm,
+    paddingVertical: GeistSpacing.xs,
+    backgroundColor: GeistColors.gray100,
+    borderWidth: GeistBorders.medium,
+    borderColor: GeistColors.border,
+    borderRadius: GeistBorderRadius.full,
   },
-  statValue: {
-    fontSize: GeistFontSizes.xxl,
-    fontWeight: GeistFontWeights.black,
+  statChipText: {
+    ...GeistTypography.badge,
+    fontSize: 11,
+    color: GeistColors.gray700,
+  },
+  statChipDue: {
+    backgroundColor: GeistColors.coralLight,
+  },
+  statChipDueText: {
     color: GeistColors.foreground,
-  },
-  dueValue: {
-    color: GeistColors.coralDark,
-  },
-  statLabel: {
-    ...GeistTypography.caption,
-    color: GeistColors.gray600,
+    fontWeight: GeistFontWeights.extrabold,
   },
   studyButton: {
     flexDirection: 'row',
@@ -490,6 +607,45 @@ const styles = StyleSheet.create({
     ...GeistTypography.button,
     color: GeistColors.foreground,
   },
+  studyButtonPrimary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: GeistColors.violet,
+    borderWidth: GeistBorders.thick,
+    borderColor: GeistColors.border,
+    borderRadius: GeistBorderRadius.md,
+    paddingVertical: GeistSpacing.md,
+    paddingHorizontal: GeistSpacing.lg,
+    gap: GeistSpacing.sm,
+    minHeight: 56,
+    ...GeistShadows.md,
+    ...(Platform.OS === 'web' && { cursor: 'pointer' as any }),
+  },
+  studyButtonPrimaryText: {
+    ...GeistTypography.bodyStrong,
+    color: GeistColors.foreground,
+    flex: 1,
+    textAlign: 'center',
+  },
+  emptyDeckButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: GeistColors.amberLight,
+    borderWidth: GeistBorders.thick,
+    borderColor: GeistColors.border,
+    borderRadius: GeistBorderRadius.md,
+    paddingVertical: GeistSpacing.md,
+    paddingHorizontal: GeistSpacing.lg,
+    gap: GeistSpacing.sm,
+    minHeight: 52,
+    ...GeistShadows.sm,
+  },
+  emptyDeckButtonText: {
+    ...GeistTypography.bodyStrong,
+    color: GeistColors.foreground,
+  },
   emptyDeckPrompt: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -504,6 +660,23 @@ const styles = StyleSheet.create({
   emptyDeckText: {
     ...GeistTypography.body,
     color: GeistColors.gray700,
+  },
+  allDoneCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: GeistSpacing.md,
+    gap: GeistSpacing.sm,
+    backgroundColor: GeistColors.tealLight,
+    borderWidth: GeistBorders.thick,
+    borderColor: GeistColors.border,
+    borderRadius: GeistBorderRadius.md,
+    minHeight: 56,
+    ...GeistShadows.sm,
+  },
+  allDoneCardText: {
+    ...GeistTypography.bodyStrong,
+    color: GeistColors.foreground,
   },
   allDonePrompt: {
     flexDirection: 'row',
@@ -525,15 +698,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: GeistSpacing.xxxl,
-    gap: GeistSpacing.md,
+    gap: GeistSpacing.lg,
+  },
+  emptyIconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: GeistBorderRadius.lg,
+    backgroundColor: GeistColors.pastelViolet,
+    borderWidth: GeistBorders.thick,
+    borderColor: GeistColors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...GeistShadows.md,
   },
   emptyText: {
-    ...GeistTypography.title,
+    ...GeistTypography.headline,
     color: GeistColors.foreground,
+    textAlign: 'center',
   },
   emptySubtext: {
     ...GeistTypography.body,
     color: GeistColors.gray600,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  emptyStateButton: {
+    ...GeistComponents.button.primary,
+    flexDirection: 'row',
+    gap: GeistSpacing.sm,
+    marginTop: GeistSpacing.md,
+    minHeight: 56,
+  },
+  emptyStateButtonText: {
+    ...GeistTypography.button,
+    color: GeistColors.foreground,
   },
   fab: {
     position: 'absolute',

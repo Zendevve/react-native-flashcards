@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -21,7 +22,9 @@ import {
   GeistShadows,
   GeistTypography,
   GeistComponents,
+  GeistFontWeights,
 } from '../theme/geist';
+import { useResponsive, useContentWidth } from '../hooks/useResponsive';
 import ImportExportModal from '../components/ImportExportModal';
 import { cardRepository } from '../database/cardRepository';
 
@@ -36,6 +39,10 @@ const DeckDetailScreen = () => {
   const { currentDeck, deckStats, loadDeck, loadDeckStats, cards, loadCards } = useStore();
   const [showImportModal, setShowImportModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
+  const { isPhone, width, orientation } = useResponsive();
+  const contentWidth = useContentWidth();
+  const isWeb = Platform.OS === 'web';
+  const isLandscape = orientation === 'landscape';
 
   useEffect(() => {
     loadDeck(deckId);
@@ -86,126 +93,148 @@ const DeckDetailScreen = () => {
     navigation.navigate('Study', { deckId });
   };
 
+  const hasDueCards = (stats?.dueCards || 0) > 0;
+  const hasCards = (stats?.totalCards || 0) > 0;
+
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.deckName}>{currentDeck.name}</Text>
-        {currentDeck.description ? (
-          <Text style={styles.deckDescription}>{currentDeck.description}</Text>
-        ) : null}
+    <ScrollView style={styles.container} contentContainerStyle={[
+      styles.scrollContent,
+      isWeb && width > 1200 && { maxWidth: contentWidth, alignSelf: 'center', width: '100%' }
+    ]}>
+      {/* Hero Section */}
+      <View style={[
+        styles.heroSection,
+        isLandscape && styles.heroSectionLandscape
+      ]}>
+        <View style={styles.heroHeader}>
+          <View style={styles.heroTitleContainer}>
+            <Text style={styles.heroTitle}>{currentDeck.name}</Text>
+            {currentDeck.description && (
+              <Text style={styles.heroDescription}>{currentDeck.description}</Text>
+            )}
+          </View>
+          <TouchableOpacity
+            style={styles.settingsIconButton}
+            onPress={() => navigation.navigate('DeckSettings', { deckId })}
+          >
+            <Ionicons name="settings-outline" size={24} color={GeistColors.foreground} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Primary Action */}
+        {hasCards ? (
+          hasDueCards ? (
+            <TouchableOpacity
+              style={styles.primaryStudyButton}
+              onPress={handleStartStudy}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="play-circle" size={28} color={GeistColors.foreground} />
+              <Text style={styles.primaryStudyButtonText}>
+                Start Studying • {stats?.dueCards} cards
+              </Text>
+              <Ionicons name="arrow-forward" size={24} color={GeistColors.foreground} />
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.allCaughtUpCard}>
+              <Ionicons name="checkmark-circle" size={28} color={GeistColors.foreground} />
+              <Text style={styles.allCaughtUpText}>All caught up! 🎉</Text>
+            </View>
+          )
+        ) : (
+          <TouchableOpacity
+            style={styles.addCardsButton}
+            onPress={() => navigation.navigate('CardList', { deckId })}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="add-circle" size={24} color={GeistColors.foreground} />
+            <Text style={styles.addCardsButtonText}>Add Your First Cards</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
-      <View style={styles.statsContainer}>
-        <Text style={styles.sectionTitle}>Statistics</Text>
-        <View style={styles.statsGrid}>
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>{stats?.totalCards || 0}</Text>
-            <Text style={styles.statLabel}>Total Cards</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text style={[styles.statValue, { color: '#2196f3' }]}>
-              {stats?.newCards || 0}
-            </Text>
-            <Text style={styles.statLabel}>New</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text style={[styles.statValue, { color: '#ff9800' }]}>
-              {stats?.learningCards || 0}
-            </Text>
-            <Text style={styles.statLabel}>Learning</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text style={[styles.statValue, { color: '#4caf50' }]}>
-              {stats?.reviewCards || 0}
-            </Text>
-            <Text style={styles.statLabel}>Review</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text style={[styles.statValue, { color: '#9c27b0' }]}>
-              {stats?.masteredCards || 0}
-            </Text>
-            <Text style={styles.statLabel}>Mastered</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text style={[styles.statValue, { color: '#6200ee' }]}>
-              {stats?.dueCards || 0}
-            </Text>
-            <Text style={styles.statLabel}>Due Today</Text>
-          </View>
+      {/* Stats Grid */}
+      <View style={[
+        styles.statsSection,
+        isLandscape && styles.statsSectionLandscape
+      ]}>
+        <View style={styles.statCard}>
+          <Ionicons name="albums" size={20} color={GeistColors.violet} />
+          <Text style={styles.statCardValue}>{stats?.totalCards || 0}</Text>
+          <Text style={styles.statCardLabel}>Total</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Ionicons name="sparkles" size={20} color={GeistColors.teal} />
+          <Text style={styles.statCardValue}>{stats?.newCards || 0}</Text>
+          <Text style={styles.statCardLabel}>New</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Ionicons name="refresh" size={20} color={GeistColors.amber} />
+          <Text style={styles.statCardValue}>{stats?.reviewCards || 0}</Text>
+          <Text style={styles.statCardLabel}>Review</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Ionicons name="star" size={20} color={GeistColors.lime} />
+          <Text style={styles.statCardValue}>{stats?.masteredCards || 0}</Text>
+          <Text style={styles.statCardLabel}>Mastered</Text>
         </View>
       </View>
 
-      <View style={styles.actionsContainer}>
-        <Text style={styles.sectionTitle}>Actions</Text>
-        
+      {/* Quick Actions Grid */}
+      <View style={styles.actionsGrid}>
         <TouchableOpacity
-          style={[styles.actionButton, styles.primaryButton]}
-          onPress={handleStartStudy}
-        >
-          <Ionicons name="school" size={20} color={GeistColors.foreground} />
-          <Text style={styles.actionButtonText}>Start Study Session</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.actionButton}
+          style={styles.actionCard}
           onPress={() => navigation.navigate('CardList', { deckId })}
+          activeOpacity={0.8}
         >
-          <Ionicons name="list" size={20} color={GeistColors.foreground} />
-          <Text style={[styles.actionButtonText, styles.actionButtonTextNeutral]}>
-            View All Cards
-          </Text>
+          <View style={[styles.actionIconContainer, { backgroundColor: GeistColors.violetLight }]}>
+            <Ionicons name="list" size={24} color={GeistColors.foreground} />
+          </View>
+          <Text style={styles.actionCardText}>View Cards</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={styles.actionButton}
-          onPress={() => navigation.navigate('DeckSettings', { deckId })}
-        >
-          <Ionicons name="settings-outline" size={20} color={GeistColors.foreground} />
-          <Text style={[styles.actionButtonText, styles.actionButtonTextNeutral]}>
-            Deck Settings
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.actionButton}
+        <TouchableOpacity
+          style={styles.actionCard}
           onPress={() => setShowImportModal(true)}
+          activeOpacity={0.8}
         >
-          <Ionicons name="download-outline" size={20} color={GeistColors.foreground} />
-          <Text style={[styles.actionButtonText, styles.actionButtonTextNeutral]}>
-            Import Cards
-          </Text>
+          <View style={[styles.actionIconContainer, { backgroundColor: GeistColors.tealLight }]}>
+            <Ionicons name="download" size={24} color={GeistColors.foreground} />
+          </View>
+          <Text style={styles.actionCardText}>Import</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={styles.actionButton}
+        <TouchableOpacity
+          style={styles.actionCard}
           onPress={() => setShowExportModal(true)}
+          activeOpacity={0.8}
         >
-          <Ionicons name="share-outline" size={20} color={GeistColors.foreground} />
-          <Text style={[styles.actionButtonText, styles.actionButtonTextNeutral]}>
-            Export Deck
-          </Text>
+          <View style={[styles.actionIconContainer, { backgroundColor: GeistColors.amberLight }]}>
+            <Ionicons name="share-social" size={24} color={GeistColors.foreground} />
+          </View>
+          <Text style={styles.actionCardText}>Export</Text>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.infoContainer}>
-        <Text style={styles.sectionTitle}>Deck Information</Text>
+      {/* Deck Info */}
+      <View style={styles.infoCard}>
         <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Category:</Text>
-          <Text style={styles.infoValue}>{currentDeck.category}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Created:</Text>
+          <Text style={styles.infoLabel}>Created</Text>
           <Text style={styles.infoValue}>
             {new Date(currentDeck.createdAt).toLocaleDateString()}
           </Text>
         </View>
         <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Last Studied:</Text>
+          <Text style={styles.infoLabel}>Last Studied</Text>
           <Text style={styles.infoValue}>
             {currentDeck.lastStudied
               ? new Date(currentDeck.lastStudied).toLocaleDateString()
               : 'Never'}
           </Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Category</Text>
+          <Text style={styles.infoValue}>{currentDeck.category}</Text>
         </View>
       </View>
 
@@ -236,120 +265,191 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: GeistColors.canvas,
   },
-  header: {
+  scrollContent: {
+    paddingBottom: GeistSpacing.xxl,
+  },
+  heroSection: {
     backgroundColor: GeistColors.surface,
     padding: GeistSpacing.xl,
     borderBottomWidth: GeistBorders.thick,
     borderBottomColor: GeistColors.border,
-    ...GeistShadows.sm,
+    gap: GeistSpacing.lg,
+    ...GeistShadows.md,
   },
-  deckName: {
-    ...GeistTypography.headline,
-    color: GeistColors.foreground,
-    backgroundColor: GeistColors.violetLight,
-    paddingHorizontal: GeistSpacing.sm,
-    paddingVertical: 4,
-    borderWidth: GeistBorders.medium,
-    borderColor: GeistColors.border,
-    borderRadius: GeistBorderRadius.sm,
-    flexShrink: 1,
-    flexWrap: 'wrap',
-  },
-  deckDescription: {
-    ...GeistTypography.body,
-    color: GeistColors.gray700,
-    lineHeight: 24,
-    marginTop: GeistSpacing.sm,
-  },
-  statsContainer: {
-    ...GeistComponents.card.spacious,
-    margin: GeistSpacing.lg,
-    backgroundColor: GeistColors.pastelViolet,
-  },
-  sectionTitle: {
-    ...GeistTypography.caption,
-    color: GeistColors.gray800,
-    marginBottom: GeistSpacing.lg,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  heroSectionLandscape: {
+    padding: GeistSpacing.lg,
     gap: GeistSpacing.md,
   },
-  statBox: {
-    minWidth: 100,
+  heroHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: GeistSpacing.md,
+  },
+  heroTitleContainer: {
     flex: 1,
-    alignItems: 'center',
-    backgroundColor: GeistColors.surface,
+    gap: GeistSpacing.xs,
+  },
+  heroTitle: {
+    ...GeistTypography.headline,
+    color: GeistColors.foreground,
+  },
+  heroDescription: {
+    ...GeistTypography.body,
+    color: GeistColors.gray600,
+    lineHeight: 22,
+  },
+  settingsIconButton: {
+    padding: GeistSpacing.sm,
     borderWidth: GeistBorders.medium,
     borderColor: GeistColors.border,
     borderRadius: GeistBorderRadius.sm,
-    paddingVertical: GeistSpacing.md,
-    paddingHorizontal: GeistSpacing.sm,
-    ...GeistShadows.sm,
+    backgroundColor: GeistColors.gray100,
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  statValue: {
-    fontSize: GeistFontSizes.xxl,
-    fontWeight: '700',
-    color: GeistColors.foreground,
-  },
-  statLabel: {
-    ...GeistTypography.caption,
-    color: GeistColors.gray600,
-  },
-  actionsContainer: {
-    ...GeistComponents.card.spacious,
-    backgroundColor: GeistColors.surface,
-    marginHorizontal: GeistSpacing.lg,
-    marginTop: 0,
-  },
-  actionButton: {
+  primaryStudyButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: GeistColors.violet,
+    borderWidth: GeistBorders.thick,
+    borderColor: GeistColors.border,
+    borderRadius: GeistBorderRadius.md,
+    paddingVertical: GeistSpacing.md,
+    paddingHorizontal: GeistSpacing.lg,
     gap: GeistSpacing.sm,
-    ...GeistComponents.button.outline,
+    minHeight: 64,
+    ...GeistShadows.lg,
+    ...(Platform.OS === 'web' && { cursor: 'pointer' as any }),
+  },
+  primaryStudyButtonText: {
+    ...GeistTypography.bodyStrong,
+    fontSize: GeistFontSizes.lg,
+    color: GeistColors.foreground,
+    flex: 1,
+    textAlign: 'center',
+  },
+  allCaughtUpCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: GeistColors.tealLight,
+    borderWidth: GeistBorders.thick,
+    borderColor: GeistColors.border,
+    borderRadius: GeistBorderRadius.md,
+    paddingVertical: GeistSpacing.lg,
+    gap: GeistSpacing.sm,
+    ...GeistShadows.sm,
+  },
+  allCaughtUpText: {
+    ...GeistTypography.bodyStrong,
+    fontSize: GeistFontSizes.lg,
+    color: GeistColors.foreground,
+  },
+  addCardsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: GeistColors.amberLight,
+    borderWidth: GeistBorders.thick,
+    borderColor: GeistColors.border,
+    borderRadius: GeistBorderRadius.md,
+    paddingVertical: GeistSpacing.md,
+    paddingHorizontal: GeistSpacing.lg,
+    gap: GeistSpacing.sm,
+    minHeight: 64,
+    ...GeistShadows.md,
+  },
+  addCardsButtonText: {
+    ...GeistTypography.bodyStrong,
+    fontSize: GeistFontSizes.lg,
+    color: GeistColors.foreground,
+  },
+  statsSection: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    padding: GeistSpacing.lg,
+    gap: GeistSpacing.sm,
+  },
+  statsSectionLandscape: {
+    padding: GeistSpacing.md,
+    paddingHorizontal: GeistSpacing.lg,
+  },
+  statCard: {
+    flex: 1,
+    minWidth: 80,
     backgroundColor: GeistColors.surface,
-    marginBottom: GeistSpacing.md,
-    minHeight: 56,
+    borderWidth: GeistBorders.thick,
+    borderColor: GeistColors.border,
+    borderRadius: GeistBorderRadius.md,
+    padding: GeistSpacing.md,
+    alignItems: 'center',
+    gap: GeistSpacing.xs,
+    ...GeistShadows.sm,
   },
-  primaryButton: {
-    ...GeistComponents.button.primary,
+  statCardValue: {
+    ...GeistTypography.title,
+    color: GeistColors.foreground,
+  },
+  statCardLabel: {
+    ...GeistTypography.caption,
+    color: GeistColors.gray600,
+  },
+  actionsGrid: {
+    flexDirection: 'row',
+    paddingHorizontal: GeistSpacing.lg,
     gap: GeistSpacing.sm,
+    marginBottom: GeistSpacing.lg,
   },
-  actionButtonText: {
-    ...GeistTypography.button,
+  actionCard: {
+    flex: 1,
+    backgroundColor: GeistColors.surface,
+    borderWidth: GeistBorders.thick,
+    borderColor: GeistColors.border,
+    borderRadius: GeistBorderRadius.md,
+    padding: GeistSpacing.lg,
+    alignItems: 'center',
+    gap: GeistSpacing.sm,
+    minHeight: 100,
+    ...GeistShadows.sm,
+  },
+  actionIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: GeistBorderRadius.sm,
+    borderWidth: GeistBorders.medium,
+    borderColor: GeistColors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionCardText: {
+    ...GeistTypography.bodyStrong,
     color: GeistColors.foreground,
+    textAlign: 'center',
   },
-  actionButtonTextNeutral: {
-    color: GeistColors.foreground,
-  },
-  infoContainer: {
-    ...GeistComponents.card.spacious,
-    backgroundColor: GeistColors.pastelTeal,
+  infoCard: {
+    ...GeistComponents.card.default,
     marginHorizontal: GeistSpacing.lg,
-    marginTop: GeistSpacing.lg,
-    marginBottom: GeistSpacing.xxl,
+    backgroundColor: GeistColors.surface,
   },
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    paddingVertical: GeistSpacing.md,
+    alignItems: 'center',
+    paddingVertical: GeistSpacing.sm,
     borderBottomWidth: GeistBorders.medium,
-    borderBottomColor: GeistColors.border,
-    gap: GeistSpacing.md,
+    borderBottomColor: GeistColors.gray200,
   },
   infoLabel: {
     ...GeistTypography.body,
-    color: GeistColors.gray700,
-    flex: 1,
+    color: GeistColors.gray600,
   },
   infoValue: {
     ...GeistTypography.bodyStrong,
     color: GeistColors.foreground,
-    flex: 1,
-    textAlign: 'right',
   },
 });
 

@@ -168,15 +168,27 @@ npm test
 
 ### Building for Production
 
-**Web**:
+**Mobile (Android/iOS)**:
 ```bash
-npm run build:web
+# Android APK for testing
+npx eas-cli build --platform android --profile preview
+
+# Production builds
+npx eas-cli build --platform android --profile production
+npx eas-cli build --platform ios --profile production
 ```
 
-**Android APK**:
+**Web (GitHub Pages)**:
 ```bash
-eas build --platform android
+# Note: Requires web-compatible storage implementation
+# See WEB_DEPLOYMENT_STATUS.md for details
+npm run build:web
+npm run deploy
 ```
+
+**Deployment Guides:**
+- 📱 Mobile: See `DEPLOYMENT_SUMMARY.md`
+- 🌐 Web: See `WEB_DEPLOYMENT_STATUS.md` and `GITHUB_PAGES_DEPLOYMENT.md`
 
 ## Contributing
 
